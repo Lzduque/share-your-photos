@@ -16,6 +16,8 @@ library
   build-depends:
     blaze-html >= 0.9
     , scotty >= 0.12
+  default-extensions:
+    ImportQualifiedPost
 
 executable shortener
   import: common
