@@ -14,7 +14,8 @@ library
   hs-source-dirs: src
   exposed-modules: ShareYourPhotos
   build-depends:
-      scotty >= 0.12
+    blaze-html >= 0.9
+    , scotty >= 0.12
 
 executable shortener
   import: common
