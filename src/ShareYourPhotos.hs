@@ -2,16 +2,11 @@
 
 module ShareYourPhotos where
 
-import Text.Blaze.Html.Renderer.Text (renderHtml)
-import Text.Blaze.Html5 qualified as H
-import Web.Scotty (get, html, scotty)
+import Network.HTTP.Types (status200)
+import Web.Scotty
 
 shareyourphotos :: IO ()
-shareyourphotos =
-  scotty 3000 $
-    get "/" $
-      html $
-        renderHtml $
-          H.html $
-            H.body $ do
-              H.h1 "Share Your Photos"
+shareyourphotos = scotty 3000 $ do
+  post "/webhook" $ do
+    status status200
+    text "Webhook received!"

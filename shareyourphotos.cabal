@@ -14,8 +14,10 @@ library
   hs-source-dirs: src
   exposed-modules: ShareYourPhotos
   build-depends:
-    blaze-html >= 0.9
+    base >= 4.7 && < 5
     , scotty >= 0.12
+    , http-types
+
   default-extensions:
     ImportQualifiedPost
 
