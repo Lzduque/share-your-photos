@@ -21,7 +21,7 @@ library
   default-extensions:
     ImportQualifiedPost
 
-executable shortener
+executable shareyourphotos
   import: common
   hs-source-dirs: app
   main-is: Main.hs
