@@ -31,7 +31,15 @@ shareyourphotos = do
       S.liftAndCatchIO $ TIO.putStrLn requestBodyText -- Print the request body
       S.liftAndCatchIO $ print requestParams -- Print the request body
       S.liftAndCatchIO $ print media -- Print the request body
-      S.text "Received"
+      S.text "Received - API"
 
 -- curl -X GET "https://api.twilio.com/2010-04-01/Accounts/AC48feacc222bc35649aa57d5463165c1a/Messages/IM3c54aedf24144037836fa7ae65a9754f/Media.json?PageSize=20" \
 -- -u AC48feacc222bc35649aa57d5463165c1a:7e5dded2c1b7fe444baca89b2b453233
+
+-- curl -u AC48feacc222bc35649aa57d5463165c1a:7e5dded2c1b7fe444baca89b2b453233 -G https://mcs.us1.twilio.com/v1/Services/IS263cd2066c9c449c91d314427843ad9c/Media/ME96fccc1b72fd06f31675af43681fc335
+-- IS263cd2066c9c449c91d314427843ad9c
+
+-- curl -X GET "https://api.twilio.com/2010-04-01/Accounts/AC48feacc222bc35649aa57d5463165c1a/Messages/MM4b5e9cb7b521263741492afd002be65c/Media/ME96fccc1b72fd06f31675af43681fc335" \
+-- -u AC48feacc222bc35649aa57d5463165c1a:7e5dded2c1b7fe444baca89b2b453233
+
+-- MediaUrl0
