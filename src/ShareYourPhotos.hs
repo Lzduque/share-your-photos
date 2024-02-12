@@ -24,16 +24,17 @@ shareyourphotos = do
         then S.text challenge -- Respond with the challenge if the verification is successful
         else S.status HTTP.status400 -- Send a 400 status code if verification fails
     S.post "/webhook" $ do
-      -- requestParams <- S.params
-      -- media <- S.param "Media" `S.rescue` (\_ -> return ("" :: String))
       mediaUrl0 <- S.param "MediaUrl0" `S.rescue` (\_ -> return ("" :: String))
-      -- requestBody <- S.body -- Get the raw request body
-      -- let requestBodyText = TLE.decodeUtf8 requestBody -- Decode it as UTF-8 text
-      -- S.liftAndCatchIO $ TIO.putStrLn requestBodyText -- Print the request body
-      -- S.liftAndCatchIO $ print requestParams -- Print the request body
-      -- S.liftAndCatchIO $ print media -- Print the request body
-      S.liftAndCatchIO $ print mediaUrl0 -- Print the request body
-      S.text "Photo recieved! You should see it soon on the screen!"
+      mediaContentType0 <- S.param "MediaContentType0" `S.rescue` (\_ -> return ("" :: String))
+
+      if mediaContentType0 == "image/jpeg" -- we have to handle is there is no "mediaUrl0" field (message is not an image) AND if message is not a photo (sticker) OR video -- types: '''' , video/mp4 ... ONLY ACCEPTABLE TYPE: image/jpeg
+        then do
+          S.text "Photo recieved! You should see it soon on the screen!" -- Respond with the challenge if the verification is successful
+          S.liftAndCatchIO $ print mediaUrl0 -- Print the request body
+          S.liftAndCatchIO $ print mediaContentType0 -- Print the request body
+        else do
+          S.text "Please, only share photos!" -- Send a 400 status code if verification fails
+          -- S.status HTTP.status400 -- if I do this withou a timer, the message is not sent, cause it sends only the 400 first.
 
 -- curl -X GET "https://api.twilio.com/2010-04-01/Accounts/AC48feacc222bc35649aa57d5463165c1a/Messages/IM3c54aedf24144037836fa7ae65a9754f/Media.json?PageSize=20" \
 -- -u AC48feacc222bc35649aa57d5463165c1a:7e5dded2c1b7fe444baca89b2b453233
