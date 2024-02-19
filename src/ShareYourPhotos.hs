@@ -24,14 +24,17 @@ shareyourphotos = do
         then S.text challenge -- Respond with the challenge if the verification is successful
         else S.status HTTP.status400 -- Send a 400 status code if verification fails
     S.post "/webhook" $ do
+      p <- S.params
+      b <- S.param "Body" `S.rescue` (\_ -> return ("" :: String))
       mediaUrl0 <- S.param "MediaUrl0" `S.rescue` (\_ -> return ("" :: String))
       mediaContentType0 <- S.param "MediaContentType0" `S.rescue` (\_ -> return ("" :: String))
-
+      S.liftAndCatchIO $ print p -- Print the params
+      S.liftAndCatchIO $ print b -- Print the request body
+      S.liftAndCatchIO $ print mediaUrl0 -- Print the request body
+      S.liftAndCatchIO $ print mediaContentType0 -- Print the request body
       if mediaContentType0 == "image/jpeg" -- we have to handle is there is no "mediaUrl0" field (message is not an image) AND if message is not a photo (sticker) OR video -- types: '''' , video/mp4 ... ONLY ACCEPTABLE TYPE: image/jpeg
         then do
           S.text "Photo recieved! You should see it soon on the screen!" -- Respond with the challenge if the verification is successful
-          S.liftAndCatchIO $ print mediaUrl0 -- Print the request body
-          S.liftAndCatchIO $ print mediaContentType0 -- Print the request body
         else do
           S.text "Please, only share photos!" -- Send a 400 status code if verification fails
           -- S.status HTTP.status400 -- if I do this withou a timer, the message is not sent, cause it sends only the 400 first.
