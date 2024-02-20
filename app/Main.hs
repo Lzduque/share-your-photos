@@ -1,7 +1,7 @@
 module Main (main) where
 
-import ShareYourPhotos (shareyourphotos)
+import qualified ShareYourPhotos
 
 main :: IO ()
 main =
-  shareyourphotos
+  ShareYourPhotos.main
