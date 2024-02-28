@@ -34,7 +34,7 @@ title.addEventListener('click', async () => {
 		})
 		// .filter((x) => x.length !== 0)
 		.map((div) => {
-			const image = div?.getElementsByTagName('div')[1]
+			const image = div?.getElementsByTagName('div')[1] // always right... the source is always right in the end
 			const reaction = div?.getElementsByTagName('div')[3] // always wrong, it is like is going inside the image
 			console.log('image: ', image)
 			console.log('reaction: ', reaction)
