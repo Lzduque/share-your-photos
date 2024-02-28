@@ -28,29 +28,27 @@ if (images) {
 title.addEventListener('click', async () => {
 	const main = document.querySelector('div[id="main"]')
 	const images = [...main.querySelectorAll('div[role="row"]')].map((d) => {
-		// console.log('div: ', d)
-		// console.log('img: ', d.querySelector('img')?.src)
-		// console.log(
-		// 	'img: ',
-		// 	d.querySelectorAll('img')
-		// 	// .querySelector("style[type='width: 100%;']")
-		// )
-		// console.log(
-		// 	'imgs: ',
-		// 	[...d.querySelectorAll('img')]?.[1]
-		// 	// .querySelector("style[type='width: 100%;']")
-		// )
-		// console.log(
-		// 	'srcs: ',
-		// 	[...d.querySelectorAll('img')]?.[1]?.src
-		// 	// .querySelector("style[type='width: 100%;']")
-		// )
-		return [...d.querySelectorAll('img')]?.[1]?.src
+		return [...d.querySelectorAll('img')]
 	})
-	if (images) {
+	const sources = [...images].map((i) => {
+		return i?.[1]?.src
+	})
+	// .filter((s) => s.startsWith('blob'))
+	const reactions = [...images].map((i) => {
+		return i?.[2]?.src
+	})
+	if (images && sources) {
 		console.log(
 			'images: ',
-			images.filter((x) => x !== undefined)
+			images.filter((x) => x.length !== 0)
+		)
+		console.log(
+			'sources: ',
+			sources.filter((x) => x !== undefined)
+		)
+		console.log(
+			'reactions: ',
+			reactions.filter((x) => x !== undefined)
 		)
 	}
 })
