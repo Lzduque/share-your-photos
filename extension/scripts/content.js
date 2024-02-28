@@ -27,18 +27,26 @@ const title = document.querySelector('#app')
 
 title.addEventListener('click', async () => {
 	const main = document.querySelector('div[id="main"]')
-	const images = [...main.querySelectorAll('div[role="row"]')]
-		.map((d) => {
-			return [...d.querySelectorAll('img')]
+	const objects = [...main.querySelectorAll('div[role="row"]')]
+		.map((x) => {
+			console.log('x.firstChild: ', x.firstChild)
+			return x.firstChild
 		})
-		.filter((x) => x.length !== 0)
-		.map((i) => {
-			return {source: i?.[1]?.src, reactions: i?.[2]}
+		// .filter((x) => x.length !== 0)
+		.map((div) => {
+			const image = div?.getElementsByTagName('div')[1]
+			const reaction = div?.getElementsByTagName('div')[3] // always wrong, it is like is going inside the image
+			console.log('image: ', image)
+			console.log('reaction: ', reaction)
+			return {
+				source: [...image.querySelectorAll('img')]?.[1]?.src,
+				reaction,
+			}
 		})
 		.filter((o) => o['source'] !== undefined)
 
-	if (images) {
-		console.log('images: ', images)
+	if (objects) {
+		console.log('objects: ', objects)
 	}
 })
 
