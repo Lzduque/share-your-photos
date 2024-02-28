@@ -39,7 +39,6 @@ title.addEventListener('click', async () => {
 
 	if (images) {
 		console.log('images: ', images)
-		// console.log('sources: ', sources)
 	}
 })
 
