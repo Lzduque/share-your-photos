@@ -30,17 +30,27 @@ title.addEventListener('click', async () => {
 	const images = [...main.querySelectorAll('div[role="row"]')].map((d) => {
 		// console.log('div: ', d)
 		// console.log('img: ', d.querySelector('img')?.src)
-		console.log(
-			'img: ',
-			d.querySelectorAll('img')
-			// .querySelector("style[type='width: 100%;']")
-		)
-		return d.querySelector("img, style[type='width: 100%;']")?.src
+		// console.log(
+		// 	'img: ',
+		// 	d.querySelectorAll('img')
+		// 	// .querySelector("style[type='width: 100%;']")
+		// )
+		// console.log(
+		// 	'imgs: ',
+		// 	[...d.querySelectorAll('img')]?.[1]
+		// 	// .querySelector("style[type='width: 100%;']")
+		// )
+		// console.log(
+		// 	'srcs: ',
+		// 	[...d.querySelectorAll('img')]?.[1]?.src
+		// 	// .querySelector("style[type='width: 100%;']")
+		// )
+		return [...d.querySelectorAll('img')]?.[1]?.src
 	})
 	if (images) {
 		console.log(
 			'images: ',
-			images.filter((x) => x != '')
+			images.filter((x) => x !== undefined)
 		)
 	}
 })
@@ -50,4 +60,7 @@ title.addEventListener('click', async () => {
 // : ''
 // hypotesis -> photos have the property: style="width: 100%;"
 // i was getting all images, and it was not giving me the ones inside the div id=main
-// now I am not getting the blob image, because it stops at the first, which is a "src="data:image/jpeg;base64,/"
+// now I am not getting the blob image, because it stops at the first, which is a "src="data:image/jpeg;base64,/" -> that is a thumbnail, very small, not what we want!
+// the photos, when I query All have 2x images inside the div (3x if there is an emoji!)
+// second level (div img) is the imag -> filter by blob
+// third level (div img) is the emoji/vote)
