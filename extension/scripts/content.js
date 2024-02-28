@@ -27,29 +27,25 @@ if (images) {
 
 title.addEventListener('click', async () => {
 	const main = document.querySelector('div[id="main"]')
-	const images = [...main.querySelectorAll('div[role="row"]')].map((d) => {
-		return [...d.querySelectorAll('img')]
-	})
+	const images = [...main.querySelectorAll('div[role="row"]')]
+		.map((d) => {
+			return [...d.querySelectorAll('img')]
+		})
+		.filter((x) => x.length !== 0)
 	const sources = [...images].map((i) => {
-		return i?.[1]?.src
+		return {source: i?.[1]?.src, reactions: i?.[2]}
 	})
 	// .filter((s) => s.startsWith('blob'))
-	const reactions = [...images].map((i) => {
-		return i?.[2]?.src
-	})
+	// const reactions = [...images].map((i) => {
+	// 	return i?.[2]
+	// })
 	if (images && sources) {
-		console.log(
-			'images: ',
-			images.filter((x) => x.length !== 0)
-		)
-		console.log(
-			'sources: ',
-			sources.filter((x) => x !== undefined)
-		)
-		console.log(
-			'reactions: ',
-			reactions.filter((x) => x !== undefined)
-		)
+		console.log('images: ', images)
+		console.log('sources: ', sources)
+		// console.log(
+		// 	'reactions: ',
+		// 	reactions.filter((x) => x !== undefined)
+		// )
 	}
 })
 
