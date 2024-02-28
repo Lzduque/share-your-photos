@@ -32,7 +32,7 @@ title.addEventListener('click', async () => {
 		// console.log('img: ', d.querySelector('img')?.src)
 		console.log(
 			'img: ',
-			d.querySelector('img')
+			d.querySelectorAll('img')
 			// .querySelector("style[type='width: 100%;']")
 		)
 		return d.querySelector("img, style[type='width: 100%;']")?.src
@@ -49,3 +49,5 @@ title.addEventListener('click', async () => {
 // ? d.querySelector('img')?.src
 // : ''
 // hypotesis -> photos have the property: style="width: 100%;"
+// i was getting all images, and it was not giving me the ones inside the div id=main
+// now I am not getting the blob image, because it stops at the first, which is a "src="data:image/jpeg;base64,/"
