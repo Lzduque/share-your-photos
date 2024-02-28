@@ -32,29 +32,19 @@ title.addEventListener('click', async () => {
 			return [...d.querySelectorAll('img')]
 		})
 		.filter((x) => x.length !== 0)
-	const sources = [...images].map((i) => {
-		return {source: i?.[1]?.src, reactions: i?.[2]}
-	})
-	// .filter((s) => s.startsWith('blob'))
-	// const reactions = [...images].map((i) => {
-	// 	return i?.[2]
-	// })
+	const sources = [...images]
+		.map((i) => {
+			return {source: i?.[1]?.src, reactions: i?.[2]}
+		})
+		.filter((o) => o['source'] !== undefined)
+
 	if (images && sources) {
 		console.log('images: ', images)
 		console.log('sources: ', sources)
-		// console.log(
-		// 	'reactions: ',
-		// 	reactions.filter((x) => x !== undefined)
-		// )
 	}
 })
 
-// .startsWith('blob')
-// ? d.querySelector('img')?.src
-// : ''
-// hypotesis -> photos have the property: style="width: 100%;"
-// i was getting all images, and it was not giving me the ones inside the div id=main
-// now I am not getting the blob image, because it stops at the first, which is a "src="data:image/jpeg;base64,/" -> that is a thumbnail, very small, not what we want!
 // the photos, when I query All have 2x images inside the div (3x if there is an emoji!)
 // second level (div img) is the imag -> filter by blob
 // third level (div img) is the emoji/vote)
+// now I have to figure out how to get the amount of votes for the reaction
