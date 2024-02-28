@@ -26,13 +26,17 @@ if (images) {
 }
 
 title.addEventListener('click', async () => {
-	const images = [...document.querySelectorAll('div[role="row"]')].map(
-		(d) => {
-			console.log('div: ', d)
-			// console.log('img: ', d.querySelector('img')?.src)
-			return d.querySelector('img')?.src
-		}
-	)
+	const main = document.querySelector('div[id="main"]')
+	const images = [...main.querySelectorAll('div[role="row"]')].map((d) => {
+		// console.log('div: ', d)
+		// console.log('img: ', d.querySelector('img')?.src)
+		console.log(
+			'img: ',
+			d.querySelector('img')
+			// .querySelector("style[type='width: 100%;']")
+		)
+		return d.querySelector("img, style[type='width: 100%;']")?.src
+	})
 	if (images) {
 		console.log(
 			'images: ',
@@ -44,3 +48,4 @@ title.addEventListener('click', async () => {
 // .startsWith('blob')
 // ? d.querySelector('img')?.src
 // : ''
+// hypotesis -> photos have the property: style="width: 100%;"
