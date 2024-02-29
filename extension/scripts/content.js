@@ -29,14 +29,36 @@ title.addEventListener('click', async () => {
 	const main = document.querySelector('div[id="main"]')
 	const objects = [...main.querySelectorAll('div[role="row"]')]
 		.map((x) => {
-			console.log('x.firstChild: ', x.firstChild)
+			// console.log('x.firstChild: ', x.firstChild)
 			return x.firstChild
 		})
 		// .filter((x) => x.length !== 0)
 		.map((div) => {
 			const image = div?.getElementsByTagName('div')[1] // always right... the source is always right in the end
-			const reaction = div?.getElementsByTagName('div')[3] // always wrong, it is like is going inside the image
+			const reaction = div?.querySelector('div').lastChild.firstChild
+				? div
+						?.querySelector('div')
+						.lastChild.firstChild?.querySelector('span')?.innerText
+					? div
+							?.querySelector('div')
+							.lastChild.firstChild?.querySelector('span')
+							?.innerText
+					: 1
+				: 0
+
 			console.log('image: ', image)
+			console.log('reaction: ', div?.querySelector('div'))
+			console.log('reaction: ', div?.querySelector('div').lastChild)
+			console.log(
+				'reaction: ',
+				div?.querySelector('div').lastChild.firstChild
+			) // if it has 0 votes, it will be null | if it has 1 vote, it will be a button
+			console.log(
+				'reaction: ',
+				div
+					?.querySelector('div')
+					.lastChild.firstChild?.querySelector('span')?.innerText
+			) // if it has more than 1 vote | if it has 0 votes and 1 vote, it will be undefined
 			console.log('reaction: ', reaction)
 			return {
 				source: [...image.querySelectorAll('img')]?.[1]?.src,
