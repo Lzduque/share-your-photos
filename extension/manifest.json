@@ -1,13 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "Hello Extensions of the world!",
-  "description": "Base Level Extension",
+  "name": "Haskell Communication Extension",
+  "description": "This is a proof of concept | recieving information from the google chrome extension and filtering it, then sending it back.",
   "version": "1.0",
   "action": {
     "default_popup": "hello.html",
     "default_icon": "hello_extensions.png"
   },
-  "permissions": ["activeTab","scripting"],    "content_scripts": [
+  "permissions": [
+      "activeTab",
+      "scripting"
+    ],
+    "content_scripts": [
     {
       "js": ["scripts/content.js"],
       "matches": [

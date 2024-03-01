@@ -1,34 +1,37 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module ShareYourPhotos where
 
--- import Data.Maybe qualified as Maybe
--- import Data.Text.Lazy.Encoding qualified as TLE
--- import Data.Text.Lazy.IO qualified as TIO
--- import Network.HTTP.Types qualified as HTTP
--- import System.Environment qualified as Env
--- import Web.Scotty qualified as S
+import Control.Monad.IO.Class (liftIO)
+import Data.Aeson (FromJSON, ToJSON, encode)
+import GHC.Generics (Generic)
+import Network.Wai.Middleware.Cors
+import Web.Scotty
 
-import Test.WebDriver
+data Info = Info {url :: String} deriving (Show, Generic)
 
-firefoxConfig :: WDConfig
-firefoxConfig = defaultConfig
+instance FromJSON Info
+
+instance ToJSON Info
 
 main :: IO ()
-main = runSession firefoxConfig $ do                      -- starts a WebDriver session with the given firefox config, then
-                                                          -- runs the supplied commands
+main = scotty 3000 $ do
+  middleware $
+    cors
+      ( const $
+          Just
+            simpleCorsResourcePolicy
+              { corsRequestHeaders = ["Content-Type"],
+                corsOrigins = Just (["chrome-extension://hiopepkbgdgkinjhhhenahmepgfaoacc"], True)
+              }
+      )
+  get "/" $ do
+    liftIO $ putStrLn "Received GET request at /"
+    text "Hello, world!"
 
-  openPage "http://google.com"                            -- tells the browser to open the URL http://google.com
-
-  searchInput <- findElem ( ByCSS "input[type='text']" )  -- asks the browser to find an element on the page with the given
-                                                          -- CSS selector then stores the resulting element in the varialbe 
-                                                          -- named`searchInput`
-                                                          
-  sendKeys "Hello, World!" searchInput                    -- type into the element, as though a user had issued the
-                                                          -- keystrokes `Hello, World!`
-                                                          
-  submit searchInput                                      -- submit the input form (technically not required with Google
-                                                          -- but included for example purposes)
-
-  closeSession                                            -- finally, close the WebDriver session and its associated
-                                                          -- browser process
+  post "/data" $ do
+    info <- jsonData :: ActionM Info
+    liftIO $ putStrLn "Received POST request at /data with the following content:"
+    liftIO $ print info -- Print the content of the Info data type
+    json info -- Echo back the received JSON

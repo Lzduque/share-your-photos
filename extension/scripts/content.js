@@ -33,25 +33,3 @@ title.addEventListener('click', async () => {
 })
 
 // now I have to be able to send this data to a back end
-// https://62a5-45-72-223-164.ngrok-free.app
-
-var channel
-var socket
-var handler = {
-	onmessage: function (evt) {
-		// evt.data will be what your server sends in channel.send_message
-	},
-}
-var xhr = new XMLHttpRequest()
-xhr.onReadyStateChange = function () {
-	// error handling and whatnot elided
-	if (xhr.readyState == 4 && xhr.status == 200) {
-		// We got a response from the server. The responseText is
-		// a channel token so we can listen for a "verified" message.
-		token = xhr.responseText
-		channel = new goog.appengine.Channel(token)
-		socket = channel.open(handler)
-	}
-}
-xhr.open('POST', 'https://62a5-45-72-223-164.ngrok-free.app', true)
-xhr.send('HI')
