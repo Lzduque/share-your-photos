@@ -19,4 +19,6 @@ document.getElementById('sendData').addEventListener('click', () => {
 				console.error('Error:', error)
 			})
 	})
+
+	chrome.tabs.create({url: chrome.runtime.getURL('animation.html')})
 })
