@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-	var showImagesButton = document.getElementById('showImages')
+	var showImagesButton = document.getElementById('sendData')
 
 	showImagesButton.addEventListener('click', function () {
 		// Send a message to the background script to open the animation page
