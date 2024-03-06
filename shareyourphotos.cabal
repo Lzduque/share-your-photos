@@ -15,10 +15,14 @@ library
   exposed-modules: ShareYourPhotos
   build-depends:
       base >= 4.7 && < 5
-    , aeson
-    , scotty
-    , wai-cors
-    
+      , text
+      , websockets ^>=0.12
+      , wai-websockets ^>=3.0
+      , wai ^>=3.2
+      , wai-app-static ^>=3.1
+      , warp ^>=3.3
+      , wai-cors
+
   default-extensions:
     ImportQualifiedPost
     DeriveGeneric

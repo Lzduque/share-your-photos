@@ -1,37 +1,34 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module ShareYourPhotos where
 
-import Control.Monad.IO.Class (liftIO)
-import Data.Aeson (FromJSON, ToJSON, encode)
-import GHC.Generics (Generic)
-import Network.Wai.Middleware.Cors
-import Web.Scotty
+import Data.Text (Text)
+import Network.Wai qualified as Wai
+import Network.Wai.Application.Static qualified as Static
+import Network.Wai.Handler.Warp qualified as Warp
+import Network.Wai.Handler.WebSockets qualified as WaiWS
+import Network.WebSockets qualified as WS
 
-data Info = Info {url :: String} deriving (Show, Generic)
+app :: Wai.Application
+app = WaiWS.websocketsOr WS.defaultConnectionOptions wsApp backupApp
+  where
+    -- Corrected backupApp definition
+    backupApp = Static.staticApp (Static.defaultFileServerSettings "static")
 
-instance FromJSON Info
-
-instance ToJSON Info
+wsApp :: WS.ServerApp
+wsApp pendingConn = do
+  conn <- WS.acceptRequest pendingConn
+  WS.forkPingThread conn 30 -- Keep the connection alive
+  putStrLn "Client connected"
+  -- Echo messages back to the client
+  let loop = do
+        msg <- WS.receiveData conn
+        WS.sendTextData conn (msg :: Text)
+        loop
+  loop
 
 main :: IO ()
-main = scotty 3001 $ do
-  middleware $
-    cors
-      ( const $
-          Just
-            simpleCorsResourcePolicy
-              { corsRequestHeaders = ["Content-Type"],
-                corsOrigins = Just (["chrome-extension://hiopepkbgdgkinjhhhenahmepgfaoacc"], True)
-              }
-      )
-  get "/" $ do
-    liftIO $ putStrLn "Received GET request at /"
-    text "Hello, world!"
-
-  post "/data" $ do
-    info <- jsonData :: ActionM Info
-    liftIO $ putStrLn "Received POST request at /data with the following content:"
-    liftIO $ print info -- Print the content of the Info data type
-    json info -- Echo back the received JSON
+main = do
+  let port = 3001
+  putStrLn $ "Starting server on port " ++ show port
+  Warp.run port app

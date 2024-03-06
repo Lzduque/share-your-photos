@@ -3,52 +3,68 @@ let socket = null
 const serverUrl = 'ws://localhost:3001' // Update with your actual server WebSocket URL
 
 function connectWebSocket() {
+	if (socket && socket.readyState === WebSocket.OPEN) return
+
 	socket = new WebSocket(serverUrl)
 
-	socket.onopen = function () {
+	socket.onopen = () => {
 		console.log('WebSocket connection established with the server.')
 	}
 
-	socket.onerror = function (error) {
+	socket.onerror = (error) => {
 		console.error('WebSocket error:', error)
 	}
 
-	socket.onmessage = function (event) {
-		// Handle messages received from the server
-    console.log('Message from server:', event.data);
-
-    // Assuming animation.html is open in a tab, find that tab
-    chrome.tabs.query({url: chrome.runtime.getURL('animation.html')}, function(tabs) {
-        if (tabs.length > 0) {
-            // Assuming animation.html is only open in one tab
-            let animationTabId = tabs[0].id;
-            // Send the data to animation.js running in the tab with animation.html
-            chrome.tabs.sendMessage(animationTabId, { action: "newImages", data: event.data });
-        } else {
-            console.log('animation.html is not open');
-        }
-    });
+	socket.onmessage = (event) => {
+		console.log('Message from server:', event.data)
+		chrome.tabs.query(
+			{url: chrome.runtime.getURL('animation.html')},
+			(tabs) => {
+				if (tabs.length > 0) {
+					let animationTabId = tabs[0].id
+					chrome.tabs.sendMessage(animationTabId, {
+						action: 'newImages',
+						data: event.data,
+					})
+				} else {
+					console.log('Opening animation.html as it is not open.')
+					chrome.tabs.create(
+						{url: chrome.runtime.getURL('animation.html')},
+						(tab) => {
+							// Consider adding logic here to ensure animation.html is ready before sending data
+						}
+					)
+				}
+			}
+		)
+	}
 }
 
-// Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-		console.log('request: ', request)
-	if (request.node) {
-		console.log('Received object from content script:', request.node)
-		if (socket && socket.readyState === WebSocket.OPEN) {
-			// Send the image URL to the server
-			socket.send(JSON.stringify({node: request.node}))
+	console.log('Received request: ', request)
+	if (request.imageData) {
+		// Assuming 'imageData' is a more descriptive property name
+		console.log(
+			'Received image data from content script:',
+			request.imageData
+		)
+		if (socket.readyState === WebSocket.OPEN) {
+			socket.send(JSON.stringify({imageData: request.imageData}))
 		} else {
-			console.log('WebSocket not connected. Reconnecting...')
+			console.log('WebSocket not connected. Attempting to reconnect...')
 			connectWebSocket()
+			// Consider adding logic to queue messages or wait for connection
 		}
 	} else if (request.action === 'openAnimationPage') {
-		chrome.tabs.create({url: chrome.runtime.getURL('animation.html')})
-		sendResponse({status: 'Animation page opened'})
+		chrome.tabs.create(
+			{url: chrome.runtime.getURL('animation.html')},
+			() => {
+				sendResponse({status: 'Animation page opened'})
+				// Consider additional signaling from animation.html to indicate readiness
+			}
+		)
+		return true // Indicates that sendResponse will be called asynchronously
 	}
 })
 
-// Ensure WebSocket connection is open
-if (!socket || socket.readyState !== WebSocket.OPEN) {
-	connectWebSocket()
-}
+connectWebSocket() // Initiate WebSocket connection
