@@ -16,7 +16,7 @@ instance FromJSON Info
 instance ToJSON Info
 
 main :: IO ()
-main = scotty 3000 $ do
+main = scotty 3001 $ do
   middleware $
     cors
       ( const $
