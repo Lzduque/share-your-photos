@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Image Grid</title>
+  <style>
+    /* Basic styling for the grid; customize as needed */
+    #imageGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      /* Adjust size as needed */
+      gap: 10px;
+      /* Adjust gap between images as needed */
+      padding: 10px;
+      max-width: 100vw;
+      margin: auto;
+    }
+
+    img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      /* Adjust how images fit within their boxes */
+    }
+  </style>
+</head>
+
+<body>
+  <div id="imageGrid"></div> <!-- Grid container for images -->
+  <script src="animation.js"></script>
+</body>
+
+</html>

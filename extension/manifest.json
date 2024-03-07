@@ -30,5 +30,11 @@
       "matches": ["*://web.whatsapp.com/*"],
       "js": ["scripts/content.js"]
     }
-]
+  ],
+  "web_accessible_resources": [
+    {
+        "resources": ["animation.html", "scripts/animation.js"],
+        "matches": ["<all_urls>"]
+    }
+  ]
 }
