@@ -36,12 +36,15 @@ app req respond
   | pathInfo req == ["send-image"] = do
       putStrLn "Received request to /send-image"
       body <- requestBody req  -- body is a lazy ByteString
+      putStrLn ("Received body: " ++ show body)
       putStrLn "Received body from request"
       let response = echoJson body
       putStrLn "Sending JSON response back to client"
+      putStrLn ("Responde: " ++ show response)
       respond $ responseLBS status200 [("Content-Type", "application/json")] response
   | otherwise = do
       putStrLn "Received request to an unspecified path"
+      putStrLn ("Path: " ++ show (pathInfo req))
       respond $ responseLBS status200 [] "Server is running"
 
 echoJson :: ByteString -> LBS.ByteString
