@@ -1,8 +1,26 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	console.log('Message received: ', message)
-	if (message.imageUrl) {
+	if (message.action === 'startMonitoringWhatsApp') {
+		// Find the WhatsApp Web tab
+		chrome.tabs.query({url: '*://web.whatsapp.com/*'}, (tabs) => {
+			tabs.forEach((tab) => {
+				// Inject the content script into the WhatsApp Web tab
+				chrome.scripting.executeScript(
+					{
+						target: {tabId: tab.id},
+						files: ['scripts/content.js'],
+					},
+					() => {
+						// Once the content script is injected, send a message to start observing
+						chrome.tabs.sendMessage(tab.id, {
+							action: 'startObserving',
+						})
+					}
+				)
+			})
+		})
+	} else if (message.imageUrl) {
 		console.log('Message image URL: ', message.imageUrl)
-		// Replace 'http://localhost:3001' with your Haskell server's actual address
 		fetch('http://localhost:3001/send-image', {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
