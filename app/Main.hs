@@ -1,7 +1,48 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main (main) where
 
-import qualified ShareYourPhotos
+import Data.Aeson (encode, object, (.=))
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Lazy as LBS
+import Data.Text.Encoding (decodeUtf8)
+import Network.HTTP.Types (status200)
+import Network.Wai
+import Network.Wai.Handler.Warp
+import Network.Wai.Middleware.Cors
+
+-- Custom CORS policy
+myCors :: Middleware
+myCors = cors $ const $ Just corsResourcePolicy
+  where
+    corsResourcePolicy = CorsResourcePolicy
+      { corsOrigins = Nothing  -- Allow all origins
+      , corsMethods = ["GET", "POST"]  -- Methods allowed
+      , corsRequestHeaders = ["Content-Type"]  -- Headers allowed
+      , corsExposedHeaders = Nothing  -- Expose no additional headers
+      , corsMaxAge = Nothing  -- Cache preflight request results for no time
+      , corsVaryOrigin = False
+      , corsRequireOrigin = False
+      , corsIgnoreFailures = False
+      }
 
 main :: IO ()
-main =
-  ShareYourPhotos.main
+main = do
+    putStrLn "Starting server on port 3001..."
+    run 3001 $ myCors app
+
+app :: Application
+app req respond
+  | pathInfo req == ["send-image"] = do
+      putStrLn "Received request to /send-image"
+      body <- requestBody req  -- body is a lazy ByteString
+      putStrLn "Received body from request"
+      let response = echoJson body
+      putStrLn "Sending JSON response back to client"
+      respond $ responseLBS status200 [("Content-Type", "application/json")] response
+  | otherwise = do
+      putStrLn "Received request to an unspecified path"
+      respond $ responseLBS status200 [] "Server is running"
+
+echoJson :: ByteString -> LBS.ByteString
+echoJson bs = encode $ object ["echoedUrl" .= decodeUtf8 bs]
