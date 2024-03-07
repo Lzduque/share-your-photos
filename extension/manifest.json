@@ -17,5 +17,11 @@
   },
   "icons": {
     "48": "images/icon48.png"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://web.whatsapp.com/*"],
+      "js": ["scripts/content.js"]
+    }
+]
 }

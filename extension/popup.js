@@ -1,7 +1,21 @@
 document.getElementById('sendUrl').addEventListener('click', () => {
-	console.log('Clicked!')
-	chrome.runtime.sendMessage({
-		imageUrl:
-			'blob:https://web.whatsapp.com/15dc465b-e510-498a-8747-5a05ffc5a1ba',
+	// Query the active tab
+	chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+		// Send a message to the content script
+		chrome.tabs.sendMessage(
+			tabs[0].id,
+			{action: 'extractImageUrl'},
+			(response) => {
+				if (response.imageUrl) {
+					// Now that we have the image URL, send it to the background script
+					chrome.runtime.sendMessage({imageUrl: response.imageUrl})
+				} else {
+					console.error(
+						'Could not extract the image URL:',
+						response.error
+					)
+				}
+			}
+		)
 	})
 })
