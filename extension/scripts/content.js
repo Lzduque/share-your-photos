@@ -11,6 +11,7 @@ function handleImageExtraction() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === 'startObserving') {
 		// Extract and send existing images immediately
+		console.log('3. Received startObserving') // THIS IS NOT BEING CALLED ON FIRST CALL
 		handleImageExtraction()
 
 		// Create a MutationObserver to watch for added images
@@ -18,6 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			mutations.forEach((mutation) => {
 				mutation.addedNodes.forEach((node) => {
 					// Check if the added node is an image or contains images
+					console.log('3. Got mutations') // THIS IS NOT BEING CALLED ON FIRST CALL
 					if (node.nodeName === 'IMG') {
 						chrome.runtime.sendMessage({imageUrl: node.src})
 					} else if (node.querySelectorAll) {

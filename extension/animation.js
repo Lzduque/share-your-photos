@@ -9,6 +9,7 @@ function addImageToGrid(imageUrl) {
 // Listen for messages from the background script (to receive new image URLs)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.imageUrl) {
+		console.log('7. message.imageUrl: ', message.imageUrl)
 		addImageToGrid(message.imageUrl)
 	}
 })
