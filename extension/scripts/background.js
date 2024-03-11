@@ -46,7 +46,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				console.log('5. data.imageUrl: ', data.imageUrl)
 
 				// When receiving an image URL, forward it to the animation tab
-				if (message.imageUrl && animationTabId !== null) {
+				if (data.imageUrl && animationTabId !== null) {
 					console.log('6. There is Data! ') // THIS IS NOT BEING CALLED ON FIRST CALL
 					chrome.tabs.sendMessage(animationTabId, {
 						imageUrl: message.imageUrl,
