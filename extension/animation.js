@@ -1,15 +1,15 @@
 // Function to add a new image to the grid
-function addImageToGrid(imageUrl) {
+function addImageToGrid(image) {
 	const img = document.createElement('img')
-	img.src = imageUrl
+	img.src = image
 	img.alt = 'WhatsApp Image'
 	document.getElementById('imageGrid').appendChild(img)
 }
 
 // Listen for messages from the background script (to receive new image URLs)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (message.imageUrl) {
-		console.log('7. message.imageUrl: ', message.imageUrl)
-		addImageToGrid(message.imageUrl)
+	if (message.image) {
+		console.log('7. message.image: ', message.image)
+		addImageToGrid(message.image)
 	}
 })

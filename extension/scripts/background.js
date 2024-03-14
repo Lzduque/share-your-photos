@@ -43,14 +43,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			.then((response) => response.json())
 			.then((data) => {
 				console.log('5. Data: ', data)
-				console.log('5. data.imageUrl: ', data.imageUrl)
+				if (data.echoedUrl) {
+					const parsedImage = JSON.parse(data.echoedUrl)
+					console.log('6. parsed data.echoedUrl: ', parsedImage)
 
-				// When receiving an image URL, forward it to the animation tab
-				if (data.imageUrl && animationTabId !== null) {
-					console.log('6. There is Data! ') // THIS IS NOT BEING CALLED ON FIRST CALL
-					chrome.tabs.sendMessage(animationTabId, {
-						imageUrl: message.imageUrl,
-					})
+					// When receiving an image URL, forward it to the animation tab
+					if (parsedImage.imageUrl && animationTabId !== null) {
+						console.log('7. There is Data! ')
+						chrome.tabs.sendMessage(animationTabId, {
+							image: parsedImage.imageUrl,
+						})
+					}
 				}
 			})
 			.catch((error) => console.error('Error:', error))

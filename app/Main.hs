@@ -10,6 +10,8 @@ import Network.HTTP.Types (status200)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
+import Data.Text (Text, isPrefixOf, pack)
+import qualified Data.ByteString.Lazy.Char8 as LBS
 
 -- Custom CORS policy
 myCors :: Middleware
@@ -46,3 +48,8 @@ app req respond
 
 echoJson :: ByteString -> LBS.ByteString
 echoJson bs = encode $ object ["echoedUrl" .= decodeUtf8 bs]
+-- echoJson bs =
+--     let urlText = decodeUtf8 bs -- Convert ByteString to Text for easier manipulation
+--     in if "blob:" `isPrefixOf` urlText
+--        then encode $ object ["echoedUrl" .= urlText]
+--        else encode $ object [] -- Use 'object []' to create an empty JSON object
