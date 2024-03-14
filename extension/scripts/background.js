@@ -50,8 +50,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 					// When receiving an image URL, forward it to the animation tab
 					if (parsedImage.imageUrl && animationTabId !== null) {
 						console.log('7. There is Data! ')
+						const newImage = parsedImage.imageUrl
+						console.log('7. new image: ', newImage)
+						console.log('7. animationTabId: ', animationTabId)
 						chrome.tabs.sendMessage(animationTabId, {
-							image: parsedImage.imageUrl,
+							image: newImage,
 						})
 					}
 				}
