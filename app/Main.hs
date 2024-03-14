@@ -1,17 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Main (main) where
 
-import Data.Aeson (encode, object, (.=))
+import GHC.Generics (Generic)
+import Data.Aeson (encode, decode, FromJSON, object, (.=))
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Lazy.Char8 as LBS.Char8
 import Data.Text.Encoding (decodeUtf8)
 import Network.HTTP.Types (status200)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
 import Data.Text (Text, isPrefixOf, pack)
-import qualified Data.ByteString.Lazy.Char8 as LBS
+
+data ImageRequest = ImageRequest
+    { imageUrl :: Text
+    } deriving (Show, Generic)
+instance FromJSON ImageRequest
 
 -- Custom CORS policy
 myCors :: Middleware
@@ -47,9 +54,10 @@ app req respond
       respond $ responseLBS status200 [] "Server is running"
 
 echoJson :: ByteString -> LBS.ByteString
-echoJson bs = encode $ object ["echoedUrl" .= decodeUtf8 bs]
--- echoJson bs =
---     let urlText = decodeUtf8 bs -- Convert ByteString to Text for easier manipulation
---     in if "blob:" `isPrefixOf` urlText
---        then encode $ object ["echoedUrl" .= urlText]
---        else encode $ object [] -- Use 'object []' to create an empty JSON object
+-- echoJson bs = encode $ object ["echoedUrl" .= decodeUtf8 bs]
+echoJson bs = case decode (LBS.Char8.fromStrict bs) :: Maybe ImageRequest of
+    Just req ->
+        if "blob:" `isPrefixOf` imageUrl req
+        then encode $ object ["echoedUrl" .= imageUrl req]
+        else encode $ object []  -- Use 'object []' to create an empty JSON object
+    Nothing -> encode $ object ["error" .= ("Failed to decode JSON" :: Text)]

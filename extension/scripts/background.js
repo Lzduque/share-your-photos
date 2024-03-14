@@ -44,13 +44,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			.then((data) => {
 				console.log('5. Data: ', data)
 				if (data.echoedUrl) {
-					const parsedImage = JSON.parse(data.echoedUrl)
-					console.log('6. parsed data.echoedUrl: ', parsedImage)
+					console.log('6. data.echoedUrl: ', data.echoedUrl)
 
 					// When receiving an image URL, forward it to the animation tab
-					if (parsedImage.imageUrl && animationTabId !== null) {
+					if (data.echoedUrl && animationTabId !== null) {
 						console.log('7. There is Data! ')
-						const newImage = parsedImage.imageUrl
+						const newImage = data.echoedUrl
 						console.log('7. new image: ', newImage)
 						console.log('7. animationTabId: ', animationTabId)
 						chrome.tabs.sendMessage(animationTabId, {
