@@ -4,11 +4,13 @@ function handleImageExtraction() {
 	const objects = [...main.querySelectorAll('div[role="row"]')]
 
 	if (objects) {
-		console.log('objects: ', objects)
+		// console.log('objects: ', objects)
 		objects.forEach((obj) => {
 			// Send the entire div row to the haskell server
-			console.log('object: ', obj)
-			chrome.runtime.sendMessage({row: obj})
+			return [...obj.childNodes].map((e) => {
+				// console.log('{row: e.innerHTML}: ', {row: e.innerHTML})
+				chrome.runtime.sendMessage({row: e.innerHTML})
+			})
 		})
 	}
 }
@@ -17,7 +19,6 @@ function handleImageExtraction() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === 'startObserving') {
 		// Extract and send existing rows immediately
-		console.log('3. Received startObserving')
 		handleImageExtraction()
 
 		// Create a MutationObserver to watch for added <div class role="row">
@@ -29,9 +30,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 							node.nodeName === 'DIV' &&
 							node.getAttribute('role') === 'row'
 						) {
-							console.log('Mutation node: ', node)
+							// console.log('Mutation node: ', node)
+							// console.log(
+							// 	'Mutation node.innerHTML : ',
+							// 	node.innerHTML
+							// )
 							chrome.runtime.sendMessage({
-								row: node,
+								row: node.innerHTML,
 							})
 							// }
 						}

@@ -33,12 +33,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				)
 			})
 		})
-	} else if (message.imageUrl) {
-		console.log('4. Message image URL: ', message.imageUrl)
+	} else if (message.row) {
+		console.log('4. Message image URL: ', message.row)
 		fetch('http://localhost:3001/send-image', {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({imageUrl: message.imageUrl}),
+			body: JSON.stringify({row: message.row}),
 		})
 			.then((response) => response.json())
 			.then((data) => {
