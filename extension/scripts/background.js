@@ -2,7 +2,7 @@
 let animationTabId = null
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	console.log('Message received: ', message)
+	// console.log('Message received: ', message)
 	if (message.action === 'startMonitoringWhatsApp') {
 		// Open the animation page in a new tab
 		console.log('1. startMonitoringWhatsApp')
@@ -34,27 +34,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			})
 		})
 	} else if (message.row) {
-		console.log('4. Message image URL: ', message.row)
+		const body = JSON.stringify({row: message.row, dataId: message.dataId})
+		console.log('4. Message body sent: ', body)
 		fetch('http://localhost:3001/send-image', {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({row: message.row}),
+			body: body,
 		})
 			.then((response) => response.json())
 			.then((data) => {
 				console.log('5. Data: ', data)
-				if (data.echoedUrl) {
-					console.log('6. data.echoedUrl: ', data.echoedUrl)
+				if (data.dataId) {
+					// console.log('6. dataId: ', data.dataId)
 
 					// When receiving an image URL, forward it to the animation tab
-					if (data.echoedUrl && animationTabId !== null) {
-						console.log('7. There is Data! ')
-						const newImage = data.echoedUrl
-						console.log('7. new image: ', newImage)
-						console.log('7. animationTabId: ', animationTabId)
-						chrome.tabs.sendMessage(animationTabId, {
-							image: newImage,
-						})
+					if (data.imageUrls && animationTabId !== null) {
+						const newImages = data.imageUrls
+						console.log('7. newImages: ', newImages)
+						// console.log('7. animationTabId: ', animationTabId)
+						newImages.map((e) =>
+							chrome.tabs.sendMessage(animationTabId, {
+								image: e,
+							})
+						)
 					}
 				}
 			})

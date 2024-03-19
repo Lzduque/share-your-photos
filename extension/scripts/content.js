@@ -8,8 +8,12 @@ function handleImageExtraction() {
 		objects.forEach((obj) => {
 			// Send the entire div row to the haskell server
 			return [...obj.childNodes].map((e) => {
-				// console.log('{row: e.innerHTML}: ', {row: e.innerHTML})
-				chrome.runtime.sendMessage({row: e.innerHTML})
+				console.log('First Nodes: ', e.getAttribute('data-id'))
+				// console.log('First Nodes: ', e)
+				chrome.runtime.sendMessage({
+					row: e.innerHTML,
+					dataId: e.getAttribute('data-id'),
+				})
 			})
 		})
 	}
@@ -30,13 +34,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 							node.nodeName === 'DIV' &&
 							node.getAttribute('role') === 'row'
 						) {
-							// console.log('Mutation node: ', node)
+							console.log(
+								'Mutation node: ',
+								node.firstChild.getAttribute('data-id')
+							)
 							// console.log(
 							// 	'Mutation node.innerHTML : ',
 							// 	node.innerHTML
 							// )
 							chrome.runtime.sendMessage({
 								row: node.innerHTML,
+								dataId: node.firstChild.getAttribute('data-id'),
 							})
 							// }
 						}

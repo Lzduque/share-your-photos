@@ -20,6 +20,7 @@ import Data.Maybe (catMaybes)
 
 data ImageRequest = ImageRequest
     { row :: Text
+    , dataId :: Text
     } deriving (Show, Generic, FromJSON)
 
 -- Custom CORS policy
@@ -47,7 +48,7 @@ app req respond
   | pathInfo req == ["send-image"] = do
       putStrLn "1. Received request to /send-image"
       body <- requestBody req  -- body is a lazy ByteString
-      putStrLn ("2. Received body: " ++ show body)
+      -- putStrLn ("2. Received body: " ++ show body)
       let response = echoJson body
       putStrLn ("3. Response: " ++ show response)
       respond $ responseLBS status200 [("Content-Type", "application/json")] response
@@ -61,8 +62,8 @@ echoJson bs = case decode (LBS.fromStrict bs) :: Maybe ImageRequest of
         let tags = parseTags $ row req
             imgSrcs = [srcValue | TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `isPrefixOf` srcValue]
         in if null imgSrcs
-           then encode $ object []  -- No 'blob:' images found, return an empty JSON object
-           else encode $ object ["imageUrls" .= imgSrcs]  -- Encode the list of 'blob:' image URLs
+           then encode $ object ["dataId" .= (dataId req)]  -- No 'blob:' images found, return an empty JSON object
+           else encode $ object ["imageUrls" .= imgSrcs, "dataId" .= (dataId req)]  -- Encode the list of 'blob:' image URLs
     Nothing -> encode $ object ["error" .= ("Failed to decode JSON" :: Text)]
 
 extractImageSources :: Text -> [Text]
