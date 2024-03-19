@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Main (main) where
 
@@ -14,11 +15,12 @@ import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
 import Data.Text (Text, isPrefixOf, pack)
+import Text.HTML.TagSoup
+import Data.Maybe (catMaybes)
 
 data ImageRequest = ImageRequest
-    { imageUrl :: Text
-    } deriving (Show, Generic)
-instance FromJSON ImageRequest
+    { row :: Text
+    } deriving (Show, Generic, FromJSON)
 
 -- Custom CORS policy
 myCors :: Middleware
@@ -54,10 +56,18 @@ app req respond
       respond $ responseLBS status200 [] "Server is running"
 
 echoJson :: ByteString -> LBS.ByteString
--- echoJson bs = encode $ object ["echoedUrl" .= decodeUtf8 bs]
-echoJson bs = case decode (LBS.Char8.fromStrict bs) :: Maybe ImageRequest of
+echoJson bs = case decode (LBS.fromStrict bs) :: Maybe ImageRequest of
     Just req ->
-        if "blob:" `isPrefixOf` imageUrl req
-        then encode $ object ["echoedUrl" .= imageUrl req]
-        else encode $ object []  -- Use 'object []' to create an empty JSON object
+        let tags = parseTags $ row req
+            imgSrcs = [srcValue | TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `isPrefixOf` srcValue]
+        in if null imgSrcs
+           then encode $ object []  -- No 'blob:' images found, return an empty JSON object
+           else encode $ object ["imageUrls" .= imgSrcs]  -- Encode the list of 'blob:' image URLs
     Nothing -> encode $ object ["error" .= ("Failed to decode JSON" :: Text)]
+
+extractImageSources :: Text -> [Text]
+extractImageSources html = 
+    let tags = parseTags html
+        imgs = filter (isTagOpenName "img") tags
+        srcs = [fromAttrib "src" tag | tag@(TagOpen "img" _) <- tags] -- Extract src directly
+    in srcs  -- No need for catMaybes or maybeTagText
