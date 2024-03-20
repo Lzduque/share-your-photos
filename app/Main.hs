@@ -14,13 +14,15 @@ import Network.HTTP.Types (status200)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
-import Data.Text (Text, isPrefixOf, pack)
+import qualified Data.Text as T
 import Text.HTML.TagSoup
 import Data.Maybe (catMaybes)
+import qualified Data.Set as Set
+import Data.IORef (newIORef, IORef, readIORef, modifyIORef)
 
 data ImageRequest = ImageRequest
-    { row :: Text
-    , dataId :: Text
+    { row :: T.Text
+    , dataId :: T.Text
     } deriving (Show, Generic, FromJSON)
 
 -- Custom CORS policy
@@ -40,35 +42,46 @@ myCors = cors $ const $ Just corsResourcePolicy
 
 main :: IO ()
 main = do
+    imageSetRef <- newIORef Set.empty  -- Initialize the IORef to an empty Set
     putStrLn "Starting server on port 3001..."
-    run 3001 $ myCors app
+    run 3001 $ myCors (app imageSetRef)
 
-app :: Application
-app req respond
+app :: IORef (Set.Set T.Text) -> Application
+app imageSetRef req respond
   | pathInfo req == ["send-image"] = do
       putStrLn "1. Received request to /send-image"
       body <- requestBody req  -- body is a lazy ByteString
       -- putStrLn ("2. Received body: " ++ show body)
-      let response = echoJson body
+      response <- echoJson imageSetRef body
       putStrLn ("3. Response: " ++ show response)
       respond $ responseLBS status200 [("Content-Type", "application/json")] response
   | otherwise = do
       putStrLn ("1. Unspecified Path: " ++ show (pathInfo req))
       respond $ responseLBS status200 [] "Server is running"
 
-echoJson :: ByteString -> LBS.ByteString
-echoJson bs = case decode (LBS.fromStrict bs) :: Maybe ImageRequest of
-    Just req ->
+echoJson :: IORef (Set.Set T.Text) -> ByteString -> IO LBS.ByteString
+echoJson imageSetRef bs = case decode (LBS.fromStrict bs) :: Maybe ImageRequest of
+    Just req -> do
         let tags = parseTags $ row req
-            imgSrcs = [srcValue | TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `isPrefixOf` srcValue]
-        in if null imgSrcs
-           then encode $ object ["dataId" .= (dataId req)]  -- No 'blob:' images found, return an empty JSON object
-           else encode $ object ["imageUrls" .= imgSrcs, "dataId" .= (dataId req)]  -- Encode the list of 'blob:' image URLs
-    Nothing -> encode $ object ["error" .= ("Failed to decode JSON" :: Text)]
+        let imgSrcs = Set.fromList [srcValue | TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
+        alreadyStored <- readIORef imageSetRef
+        let newSrcs = Set.difference imgSrcs alreadyStored  -- Determine new sources that aren't already stored
+        modifyIORef imageSetRef (`Set.union` newSrcs)  -- Add new sources to the global Set
+        if Set.null newSrcs
+           then do
+               putStrLn $ "No new images. Data ID: " ++ T.unpack (dataId req)
+               return $ encode $ object ["dataId" .= (dataId req)]
+           else do
+               putStrLn $ "New images: " ++ show (Set.toList newSrcs)
+               putStrLn $ "Data ID: " ++ T.unpack (dataId req)
+               return $ encode $ object ["imageUrls" .= Set.toList newSrcs, "dataId" .= (dataId req)]
+    Nothing -> do
+        putStrLn "Failed to decode JSON"
+        return $ encode $ object ["error" .= ("Failed to decode JSON" :: T.Text)]
 
-extractImageSources :: Text -> [Text]
+extractImageSources :: T.Text -> [T.Text]
 extractImageSources html = 
     let tags = parseTags html
         imgs = filter (isTagOpenName "img") tags
         srcs = [fromAttrib "src" tag | tag@(TagOpen "img" _) <- tags] -- Extract src directly
-    in srcs  -- No need for catMaybes or maybeTagText
+    in srcs  -- No need for catMaybes or maybeTagT.Text

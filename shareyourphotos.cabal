@@ -18,6 +18,7 @@ executable shareyourphotos
         , bytestring
         , http-types
         , tagsoup
+        , containers
 
   default-language: Haskell2010
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
