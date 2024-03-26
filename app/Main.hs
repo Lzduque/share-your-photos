@@ -63,25 +63,28 @@ echoJson :: IORef (Set.Set T.Text) -> ByteString -> IO LBS.ByteString
 echoJson imageSetRef bs = case decode (LBS.fromStrict bs) :: Maybe ImageRequest of
     Just req -> do
         let tags = parseTags $ row req
+        putStrLn ("2. tags: " ++ show tags)
         let imgSrcs = Set.fromList [srcValue | TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
+        -- putStrLn ("2. imgSrcs: " ++ show imgSrcs)
         alreadyStored <- readIORef imageSetRef
+        putStrLn ("2. alreadyStored: " ++ show alreadyStored)
         let newSrcs = Set.difference imgSrcs alreadyStored  -- Determine new sources that aren't already stored
+        -- putStrLn ("2. newSrcs: " ++ show newSrcs)
         modifyIORef imageSetRef (`Set.union` newSrcs)  -- Add new sources to the global Set
         if Set.null newSrcs
            then do
-               putStrLn $ "No new images. Data ID: " ++ T.unpack (dataId req)
+               putStrLn $ "2. No new images. Data ID: " ++ T.unpack (dataId req)
                return $ encode $ object ["dataId" .= (dataId req)]
            else do
-               putStrLn $ "New images: " ++ show (Set.toList newSrcs)
-               putStrLn $ "Data ID: " ++ T.unpack (dataId req)
+               putStrLn $ "2. New images: " ++ show (Set.toList newSrcs) ++ " " ++ T.unpack (dataId req)
                return $ encode $ object ["imageUrls" .= Set.toList newSrcs, "dataId" .= (dataId req)]
     Nothing -> do
-        putStrLn "Failed to decode JSON"
+        putStrLn "2. Failed to decode JSON"
         return $ encode $ object ["error" .= ("Failed to decode JSON" :: T.Text)]
 
-extractImageSources :: T.Text -> [T.Text]
-extractImageSources html = 
-    let tags = parseTags html
-        imgs = filter (isTagOpenName "img") tags
-        srcs = [fromAttrib "src" tag | tag@(TagOpen "img" _) <- tags] -- Extract src directly
-    in srcs  -- No need for catMaybes or maybeTagT.Text
+-- extractImageSources :: T.Text -> [T.Text]
+-- extractImageSources html = 
+--     let tags = parseTags html
+--         imgs = filter (isTagOpenName "img") tags
+--         srcs = [fromAttrib "src" tag | tag@(TagOpen "img" _) <- tags] -- Extract src directly
+--     in srcs  -- No need for catMaybes or maybeTagT.Text
