@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			})
 		})
 	} else if (message.row) {
-		const body = JSON.stringify({row: message.row, dataId: message.dataId})
+		const body = JSON.stringify({row: message.row})
 		console.log('4. Message body sent: ', body)
 		fetch('http://localhost:3001/send-image', {
 			method: 'POST',
@@ -44,20 +44,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			.then((response) => response.json())
 			.then((data) => {
 				console.log('5. Data: ', data)
-				if (data.dataId) {
-					// console.log('6. dataId: ', data.dataId)
-
-					// When receiving an image URL, forward it to the animation tab
-					if (data.imageUrls && animationTabId !== null) {
-						const newImages = data.imageUrls
-						console.log('7. newImages: ', newImages)
-						// console.log('7. animationTabId: ', animationTabId)
-						newImages.map((e) =>
-							chrome.tabs.sendMessage(animationTabId, {
-								image: e,
-							})
-						)
-					}
+				// When receiving an image URL, forward it to the animation tab
+				if (data.imageUrls && animationTabId !== null) {
+					const newImages = data.imageUrls
+					console.log('7. newImages: ', newImages)
+					// console.log('7. animationTabId: ', animationTabId)
+					newImages.map((e) =>
+						chrome.tabs.sendMessage(animationTabId, {
+							image: e,
+						})
+					)
 				}
 			})
 			.catch((error) => console.error('Error:', error))

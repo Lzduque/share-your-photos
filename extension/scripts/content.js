@@ -1,17 +1,11 @@
 // Function to handle rows extraction and sending them to the background script
 function handleImageExtraction() {
 	const main = document.querySelector('div[id="main"]')
-	const objects = [...main.querySelectorAll('div[role="row"]')]
 
-	if (objects) {
+	if (main) {
 		// console.log('objects: ', objects)
-		return [...objects].map((e) => {
-			// Send the entire div row to the haskell server
-			// console.log('First Nodes: ', e.firstChild.getAttribute('data-id'))
-			chrome.runtime.sendMessage({
-				row: e.innerHTML,
-				dataId: e.firstChild.getAttribute('data-id'),
-			})
+		chrome.runtime.sendMessage({
+			row: main.innerHTML,
 		})
 	}
 }
@@ -22,29 +16,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Extract and send existing rows immediately
 		handleImageExtraction()
 
-		// Create a MutationObserver to watch for added <div class role="row">
 		const observer = new MutationObserver((mutations) => {
-			mutations.forEach((mutation) => {
-				if (mutation.addedNodes.length) {
-					mutation.addedNodes.forEach((node) => {
-						if (
-							node.nodeName === 'DIV' &&
-							node.getAttribute('role') === 'row'
-						) {
-							// console.log(
-							// 	'Mutation node: ',
-							// 	node.firstChild.getAttribute('data-id')
-							// )
-							// console.log(
-							// 	'Mutation node.innerHTML : ',
-							// 	node.innerHTML
-							// )
-							chrome.runtime.sendMessage({
-								row: node.innerHTML,
-								dataId: node.firstChild.getAttribute('data-id'),
-							})
-							// }
-						}
+			mutations.forEach((m) => {
+				// console.log('Mutation: ', m.type)
+				if (m.type === 'childList') {
+					chrome.runtime.sendMessage({
+						row: document.querySelector('div[id="main"]').innerHTML,
 					})
 				}
 			})

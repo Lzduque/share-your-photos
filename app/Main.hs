@@ -22,7 +22,6 @@ import Data.IORef (newIORef, IORef, readIORef, modifyIORef)
 
 data ImageRequest = ImageRequest
     { row :: T.Text
-    , dataId :: T.Text
     } deriving (Show, Generic, FromJSON)
 
 -- Custom CORS policy
