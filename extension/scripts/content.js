@@ -5,7 +5,7 @@ function handleImageExtraction() {
 	if (main) {
 		// console.log('objects: ', objects)
 		chrome.runtime.sendMessage({
-			row: main.innerHTML,
+			content: main.innerHTML,
 		})
 	}
 }
@@ -21,7 +21,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				// console.log('Mutation: ', m.type)
 				if (m.type === 'childList') {
 					chrome.runtime.sendMessage({
-						row: document.querySelector('div[id="main"]').innerHTML,
+						content:
+							document.querySelector('div[id="main"]').innerHTML,
 					})
 				}
 			})

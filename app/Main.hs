@@ -16,7 +16,7 @@ import qualified Web.Scotty as Scotty
 import qualified Control.Monad.IO.Class as MIO
 
 data ImageRequest = ImageRequest
-    { row :: T.Text
+    { content :: T.Text
     } deriving (Show, Generic, A.FromJSON)
 
 main :: IO ()
@@ -47,7 +47,7 @@ extractImages imageSetRef bs = do
     case req of
         Just r -> do
             -- MIO.liftIO $ putStrLn $ "a 2. Decoded request: " ++ show r  -- Debug print
-            let tags = TS.parseTags $ row r
+            let tags = TS.parseTags $ content r
             MIO.liftIO $ putStrLn $ "a 3. Parsed tags: " ++ show tags  -- Debug print
             let imgSrcs = Set.fromList [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
             -- MIO.liftIO $ putStrLn $ "a 4. Image sources: " ++ show imgSrcs  -- Debug print
