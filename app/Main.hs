@@ -4,7 +4,7 @@
 
 module Main where
 
-import GHC.Generics (Generic)
+import qualified GHC.Generics as Generics
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Text.Lazy.Encoding as LTE
@@ -19,7 +19,7 @@ import qualified Data.Maybe as M
 
 data ImageRequest = ImageRequest
     { content :: T.Text
-    } deriving (Show, Generic, A.FromJSON)
+    } deriving (Show, Generics.Generic, A.FromJSON)
 
 main :: IO ()
 main = do
@@ -51,16 +51,32 @@ extractImages imageSetRef bs = do
             -- MIO.liftIO $ putStrLn $ "a 2. Decoded request: " ++ show r  -- Debug print
             let tags = TS.parseTags $ content r
             -- MIO.liftIO $ putStrLn $ "a 3. Parsed tags: " ++ show tags  -- Debug print
+
+            -- NEW
+            let openTags = filter (\tag -> case tag of
+                  TS.TagOpen _ _ -> True
+                  _ -> False)
+                  tags
+            putStrLn $ "----- openTags: " ++ show openTags  -- Debug print
+            let divTags = filter (\(TS.TagOpen tag _) -> tag == "div") openTags
+            let rows = filter (\(TS.TagOpen _ attrs) -> ("role", "row") `elem` attrs) divTags
+            let roles = TS.sections (TS.~== ("<div role=row>" :: String)) tags
+            putStrLn $ "\n\n----- roles: " ++ show (last roles)  -- Debug print
+            -- putStrLn $ "----- rows: " ++ show rows  -- Debug print
             -- let rows = [divContent | divTag@(TS.TagOpen "div" attrs) <- tags, ("role", "row") `elem` attrs, 
             --               let divContent = takeWhile (/= TS.TagClose "div") (dropWhile (/= divTag) tags)]
-            -- MIO.liftIO $ putStrLn $ "a 4. rows: " ++ show rows  -- Debug print
+            -- putStrLn $ "a 4. last row: " ++ show (last rows)  -- Debug print
             -- imgSrcsInRowsResults <- mapM findFirstBlobImgSrc rows  -- Run each IO action in the list and collect the results
-            -- MIO.liftIO $ putStrLn $ "a 5. imgSrcsInRows: " ++ show imgSrcsInRowsResults  -- Now you can use 'show' because the results are not in the IO monad anymore
-            let imgSrcs = Set.fromList [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
+            -- putStrLn $ "a 5. imgSrcsInRows: " ++ show imgSrcsInRowsResults  
+            -- /NEW
+
+            -- Now you can use 'show' because the results are not in the IO monad anymore
+            let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
+            -- putStrLn $ "--- imgSrcs: " ++ (L.intercalate "\n  " . map show  $ imgSrcs)  -- Debug print
             alreadyStored <- IORef.readIORef imageSetRef
-            let newSrcs = Set.difference imgSrcs alreadyStored
+            let newSrcs = Set.difference (Set.fromList imgSrcs) alreadyStored
             IORef.modifyIORef imageSetRef (`Set.union` newSrcs)
-            -- MIO.liftIO $ putStrLn $ "a 6. New sources: " ++ show newSrcs  -- Debug print
+            -- putStrLn $ "--- New sources: " ++ show newSrcs  -- Debug print
             if Set.null newSrcs
                 then do
                     -- MIO.liftIO $ putStrLn "a 7 a. No new images"  -- Debug print
@@ -75,13 +91,13 @@ extractImages imageSetRef bs = do
 findFirstBlobImgSrc :: [TS.Tag T.Text] -> IO (Maybe T.Text)
 findFirstBlobImgSrc rowTags = do
     let imgTags = filter isImgTag rowTags
-    putStrLn $ "5 a. Image Tags: " ++ show imgTags  -- Debug print
+    -- putStrLn $ "5 a. Image Tags: " ++ show imgTags  -- Debug print
 
-    let blobImgSrcs = M.mapMaybe extractSrc imgTags
-    putStrLn $ "5 b. Blob Image Sources: " ++ show blobImgSrcs  -- Debug print
+    let imgSrcs = M.mapMaybe extractSrc imgTags
+    -- putStrLn $ "5 b. Image Sources: " ++ show imgSrcs  -- Debug print
 
-    let result = L.find isBlobImgSrc blobImgSrcs
-    putStrLn $ "5 c. Result: " ++ show result  -- Debug print
+    let result = L.find isBlobImgSrc imgSrcs
+    putStrLn $ "5 c. Blobs: " ++ show result  -- Debug print
     return result  -- Lift the Maybe result into IO
 
   where
@@ -89,11 +105,11 @@ findFirstBlobImgSrc rowTags = do
     isImgTag (TS.TagOpen tag _) = tag == "img"
     isImgTag _ = False
 
-    isBlobImgSrc :: T.Text -> Bool
-    isBlobImgSrc src = "blob:" `T.isPrefixOf` src
-
     extractSrc :: TS.Tag T.Text -> Maybe T.Text
     extractSrc (TS.TagOpen _ attrs) =
         let srcAttr = lookup "src" attrs  -- srcAttr is already Maybe T.Text, no need to pack
         in srcAttr  -- Simply return srcAttr
     extractSrc _ = Nothing
+
+    isBlobImgSrc :: T.Text -> Bool
+    isBlobImgSrc src = "blob:" `T.isPrefixOf` src
