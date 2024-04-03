@@ -19,7 +19,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((m) => {
 				// console.log('Mutation: ', m.type)
-				if (m.type === 'childList') {
+				if (
+					m.type === 'childList' &&
+					m.addedNodes.length > 0 &&
+					m.addedNodes[0].className === '' &&
+					m.addedNodes[0].tagName === 'DIV'
+				) {
+					console.log('added:', m.addedNodes)
 					chrome.runtime.sendMessage({
 						content:
 							document.querySelector('div[id="main"]').innerHTML,
