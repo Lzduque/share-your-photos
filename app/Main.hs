@@ -19,6 +19,7 @@ import qualified Control.Monad.IO.Class as MIO
 import qualified Data.List as L
 import qualified Data.Maybe as M
 import System.IO
+import qualified Control.Monad as Control
 
 data ImageRequest = ImageRequest
     { content :: T.Text
@@ -62,6 +63,7 @@ altTextAndImages =
         -- selected img tag.
         altText <- Scalpel.attr "alt" Scalpel.anySelector
         srcUrl  <- Scalpel.attr "src" Scalpel.anySelector
+        Control.guard ("blob:" `T.isPrefixOf` (StringLike.fromString srcUrl))
         -- 3. Combine the retrieved content into the desired final result.
         return (altText, srcUrl)
 
