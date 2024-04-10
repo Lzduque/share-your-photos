@@ -11,6 +11,7 @@ import qualified Data.Text.Lazy.Encoding as LTE
 import qualified Data.Text as T
 import qualified Text.HTML.TagSoup as TS
 import qualified Text.HTML.Scalpel as Scalpel
+import qualified Text.StringLike as StringLike
 import qualified Data.Set as Set
 import qualified Data.IORef as IORef
 import qualified Web.Scotty as Scotty
@@ -44,6 +45,12 @@ app imageSetRef = do
         Scotty.setHeader "Content-Type" "application/json"
         Scotty.raw response
 
+getRowDivs :: StringLike.StringLike str => Scalpel.Scraper str str
+getRowDivs =
+  Scalpel.chroot ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ do
+    contents <- Scalpel.text Scalpel.anySelector 
+    Scalpel.html Scalpel.anySelector
+
 extractImages :: IORef.IORef (Set.Set T.Text) -> BS.ByteString -> IO BS.ByteString
 extractImages imageSetRef bs = do
     let req = A.decode bs :: Maybe ImageRequest  -- Use bs directly
@@ -53,21 +60,8 @@ extractImages imageSetRef bs = do
             let htmlContent = T.unpack $ content r :: String
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
 
-            -- scrapeStringLike :: StringLike str => str -> Scraper str a -> Maybe a
-            -- chroots :: forall str (m :: Type -> Type) a. (StringLike str, Monad m) => Selector -> ScraperT str m a -> ScraperT str m [a]
-            let tags' = Scalpel.scrapeStringLike htmlContent (Scalpel.innerHTMLs "div")
-            -- let tags' = Scalpel.scrapeStringLike (T.unpack htmlContent) $ Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ \div -> do
-            --         inner <- Scalpel.innerHTML
-            --         return inner
-            -- let tags' = Scalpel.scrapeStringLike htmlContent (Scalpel.chroots "div" (pure 0))
-            -- let tags' = Scalpel.scrapeStringLike htmlContent $ Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) (Scalpel.innerHTMLs "div")
-              -- Scalpel.scrapeStringLike htmlContent (Scalpel.attrs "role" "div") == Just ["row"]
+            let tags' = Scalpel.scrapeStringLike htmlContent getRowDivs
             MIO.liftIO $ putStrLn $ "2. tags': " ++ show tags'  -- Debug print
-
-            -- let tags = Scalpel.scrapeStringLike (T.unpack htmlContent) $
-            --     Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ \div -> do
-            --         inner <- Scalpel.innerHTML
-            --         return inner
 
             let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
             -- putStrLn $ "--- imgSrcs: " ++ (L.intercalate "\n  " . map show  $ imgSrcs)  -- Debug print
