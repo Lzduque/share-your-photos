@@ -18,6 +18,7 @@ import qualified Web.Scotty as Scotty
 import qualified Control.Monad.IO.Class as MIO
 import qualified Data.List as L
 import qualified Data.Maybe as M
+import System.IO
 
 data ImageRequest = ImageRequest
     { content :: T.Text
@@ -61,6 +62,12 @@ extractImages imageSetRef bs = do
             let tags = TS.parseTags $ content r
             let htmlContent = T.unpack $ content r :: String
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
+            htmlContent' <- readFromFile "app/test_file.txt"
+            -- putStrLn $ "1. htmlContent: " ++ show htmlContent'  -- Debug print
+            let divs' = Scalpel.scrapeStringLike htmlContent' getRowDivs :: Maybe [String]
+            -- putStrLn $ "2. divs': " ++ show divs'  -- Debug print
+            let x = M.fromMaybe [] divs'
+            -- putStrLn $ "3. x: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
 
             let divs' = Scalpel.scrapeStringLike htmlContent getRowDivs
             putStrLn $ "2. divs': " ++ show divs'  -- Debug print
@@ -111,3 +118,9 @@ findFirstBlobImgSrc rowTags = do
 
     isBlobImgSrc :: T.Text -> Bool
     isBlobImgSrc src = "blob:" `T.isPrefixOf` src
+
+readFromFile :: FilePath -> IO String
+readFromFile filePath = do
+    handle <- openFile filePath ReadMode 
+    hGetContents handle
+
