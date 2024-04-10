@@ -10,6 +10,7 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Data.Text.Lazy.Encoding as LTE
 import qualified Data.Text as T
 import qualified Text.HTML.TagSoup as TS
+import qualified Text.HTML.Scalpel as Scalpel
 import qualified Data.Set as Set
 import qualified Data.IORef as IORef
 import qualified Web.Scotty as Scotty
@@ -48,29 +49,26 @@ extractImages imageSetRef bs = do
     let req = A.decode bs :: Maybe ImageRequest  -- Use bs directly
     case req of
         Just r -> do
-            -- MIO.liftIO $ putStrLn $ "a 2. Decoded request: " ++ show r  -- Debug print
             let tags = TS.parseTags $ content r
-            -- MIO.liftIO $ putStrLn $ "a 3. Parsed tags: " ++ show tags  -- Debug print
+            let htmlContent = T.unpack $ content r :: String
+            -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
 
-            -- NEW
-            let openTags = filter (\tag -> case tag of
-                  TS.TagOpen _ _ -> True
-                  _ -> False)
-                  tags
-            putStrLn $ "----- openTags: " ++ show openTags  -- Debug print
-            let divTags = filter (\(TS.TagOpen tag _) -> tag == "div") openTags
-            let rows = filter (\(TS.TagOpen _ attrs) -> ("role", "row") `elem` attrs) divTags
-            let roles = TS.sections (TS.~== ("<div role=row>" :: String)) tags
-            putStrLn $ "\n\n----- roles: " ++ show (last roles)  -- Debug print
-            -- putStrLn $ "----- rows: " ++ show rows  -- Debug print
-            -- let rows = [divContent | divTag@(TS.TagOpen "div" attrs) <- tags, ("role", "row") `elem` attrs, 
-            --               let divContent = takeWhile (/= TS.TagClose "div") (dropWhile (/= divTag) tags)]
-            -- putStrLn $ "a 4. last row: " ++ show (last rows)  -- Debug print
-            -- imgSrcsInRowsResults <- mapM findFirstBlobImgSrc rows  -- Run each IO action in the list and collect the results
-            -- putStrLn $ "a 5. imgSrcsInRows: " ++ show imgSrcsInRowsResults  
-            -- /NEW
+            -- scrapeStringLike :: StringLike str => str -> Scraper str a -> Maybe a
+            -- chroots :: forall str (m :: Type -> Type) a. (StringLike str, Monad m) => Selector -> ScraperT str m a -> ScraperT str m [a]
+            let tags' = Scalpel.scrapeStringLike htmlContent (Scalpel.innerHTMLs "div")
+            -- let tags' = Scalpel.scrapeStringLike (T.unpack htmlContent) $ Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ \div -> do
+            --         inner <- Scalpel.innerHTML
+            --         return inner
+            -- let tags' = Scalpel.scrapeStringLike htmlContent (Scalpel.chroots "div" (pure 0))
+            -- let tags' = Scalpel.scrapeStringLike htmlContent $ Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) (Scalpel.innerHTMLs "div")
+              -- Scalpel.scrapeStringLike htmlContent (Scalpel.attrs "role" "div") == Just ["row"]
+            MIO.liftIO $ putStrLn $ "2. tags': " ++ show tags'  -- Debug print
 
-            -- Now you can use 'show' because the results are not in the IO monad anymore
+            -- let tags = Scalpel.scrapeStringLike (T.unpack htmlContent) $
+            --     Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ \div -> do
+            --         inner <- Scalpel.innerHTML
+            --         return inner
+
             let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
             -- putStrLn $ "--- imgSrcs: " ++ (L.intercalate "\n  " . map show  $ imgSrcs)  -- Debug print
             alreadyStored <- IORef.readIORef imageSetRef
