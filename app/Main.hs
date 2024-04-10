@@ -55,17 +55,17 @@ getRowDivs =
     -- Scalpel.htmls "img"
     -- guard ("blob:" `isInfixOf` contents)
 
-altTextAndImages :: Scalpel.Scraper String [(String, String)]
+altTextAndImages :: Scalpel.Scraper String [String]
 altTextAndImages =
     -- 1. First narrow the current context to each img tag.
    Scalpel.chroots "img" $ do
         -- 2. Use Any to access all the relevant content from the the currently
         -- selected img tag.
-        altText <- Scalpel.attr "alt" Scalpel.anySelector
         srcUrl  <- Scalpel.attr "src" Scalpel.anySelector
         Control.guard ("blob:" `T.isPrefixOf` (StringLike.fromString srcUrl))
         -- 3. Combine the retrieved content into the desired final result.
-        return (altText, srcUrl)
+        return (srcUrl)
+
 
 extractImages :: IORef.IORef (Set.Set T.Text) -> BS.ByteString -> IO BS.ByteString
 extractImages imageSetRef bs = do
@@ -75,6 +75,8 @@ extractImages imageSetRef bs = do
             let tags = TS.parseTags $ content r
             let htmlContent = T.unpack $ content r :: String
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
+
+            -- ------NEW CODE
             htmlContent' <- readFromFile "app/test_file.txt"
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent'  -- Debug print
             let divs' = Scalpel.scrapeStringLike htmlContent' getRowDivs :: Maybe [String]
@@ -84,6 +86,8 @@ extractImages imageSetRef bs = do
 
             let sources = map (\y -> Scalpel.scrapeStringLike y altTextAndImages) x
             putStrLn $ "4. sources: " ++ (L.intercalate "\n  sources: " . map show $ sources)  -- Debug print
+
+            -- ------NEW CODE ENDS
 
             let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
             -- putStrLn $ "--- imgSrcs: " ++ (L.intercalate "\n  " . map show  $ imgSrcs)  -- Debug print
