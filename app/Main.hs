@@ -45,11 +45,13 @@ app imageSetRef = do
         Scotty.setHeader "Content-Type" "application/json"
         Scotty.raw response
 
-getRowDivs :: StringLike.StringLike str => Scalpel.Scraper str str
+getRowDivs :: StringLike.StringLike str => Scalpel.Scraper str [str]
 getRowDivs =
-  Scalpel.chroot ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ do
+  Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ do
     contents <- Scalpel.text Scalpel.anySelector 
     Scalpel.html Scalpel.anySelector
+    -- Scalpel.htmls "img"
+    -- guard ("blob:" `isInfixOf` contents)
 
 extractImages :: IORef.IORef (Set.Set T.Text) -> BS.ByteString -> IO BS.ByteString
 extractImages imageSetRef bs = do
@@ -60,8 +62,12 @@ extractImages imageSetRef bs = do
             let htmlContent = T.unpack $ content r :: String
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
 
-            let tags' = Scalpel.scrapeStringLike htmlContent getRowDivs
-            MIO.liftIO $ putStrLn $ "2. tags': " ++ show tags'  -- Debug print
+            let divs' = Scalpel.scrapeStringLike htmlContent getRowDivs
+            putStrLn $ "2. divs': " ++ show divs'  -- Debug print
+            -- putStrLn $ "2. divs': " ++ (L.intercalate "\n  " . map show $ divs')  -- Debug print
+
+            -- let imgs' = divs' map
+            -- MIO.liftIO $ putStrLn $ "2. imgs': " ++ show imgs'  -- Debug print
 
             let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
             -- putStrLn $ "--- imgSrcs: " ++ (L.intercalate "\n  " . map show  $ imgSrcs)  -- Debug print
