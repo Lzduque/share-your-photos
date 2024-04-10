@@ -49,10 +49,21 @@ app imageSetRef = do
 getRowDivs :: StringLike.StringLike str => Scalpel.Scraper str [str]
 getRowDivs =
   Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ do
-    contents <- Scalpel.text Scalpel.anySelector 
-    Scalpel.html Scalpel.anySelector
+    contents <- Scalpel.html Scalpel.anySelector
+    return contents
     -- Scalpel.htmls "img"
     -- guard ("blob:" `isInfixOf` contents)
+
+altTextAndImages :: Scalpel.Scraper String [(String, String)]
+altTextAndImages =
+    -- 1. First narrow the current context to each img tag.
+   Scalpel.chroots "img" $ do
+        -- 2. Use Any to access all the relevant content from the the currently
+        -- selected img tag.
+        altText <- Scalpel.attr "alt" Scalpel.anySelector
+        srcUrl  <- Scalpel.attr "src" Scalpel.anySelector
+        -- 3. Combine the retrieved content into the desired final result.
+        return (altText, srcUrl)
 
 extractImages :: IORef.IORef (Set.Set T.Text) -> BS.ByteString -> IO BS.ByteString
 extractImages imageSetRef bs = do
@@ -69,12 +80,8 @@ extractImages imageSetRef bs = do
             let x = M.fromMaybe [] divs'
             -- putStrLn $ "3. x: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
 
-            let divs' = Scalpel.scrapeStringLike htmlContent getRowDivs
-            putStrLn $ "2. divs': " ++ show divs'  -- Debug print
-            -- putStrLn $ "2. divs': " ++ (L.intercalate "\n  " . map show $ divs')  -- Debug print
-
-            -- let imgs' = divs' map
-            -- MIO.liftIO $ putStrLn $ "2. imgs': " ++ show imgs'  -- Debug print
+            let sources = map (\y -> Scalpel.scrapeStringLike y altTextAndImages) x
+            putStrLn $ "4. sources: " ++ (L.intercalate "\n  sources: " . map show $ sources)  -- Debug print
 
             let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
             -- putStrLn $ "--- imgSrcs: " ++ (L.intercalate "\n  " . map show  $ imgSrcs)  -- Debug print
