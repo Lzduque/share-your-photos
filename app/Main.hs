@@ -66,6 +66,9 @@ altTextAndImages =
         -- 3. Combine the retrieved content into the desired final result.
         return (srcUrl)
 
+cleanUp :: Maybe [String] -> Bool
+cleanUp (Just []) = False
+cleanUp _ = True
 
 extractImages :: IORef.IORef (Set.Set T.Text) -> BS.ByteString -> IO BS.ByteString
 extractImages imageSetRef bs = do
@@ -85,8 +88,10 @@ extractImages imageSetRef bs = do
             -- putStrLn $ "3. x: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
 
             let sources = map (\y -> Scalpel.scrapeStringLike y altTextAndImages) x
-            putStrLn $ "4. sources: " ++ (L.intercalate "\n  sources: " . map show $ sources)  -- Debug print
+            -- putStrLn $ "4. sources: " ++ (L.intercalate "\n  source: " . map show $ sources)  -- Debug print
 
+            let blobs = M.catMaybes $ filter cleanUp sources
+            putStrLn $ "5. blobs: " ++ (L.intercalate "\n  blob: " . map show $ blobs)  -- Debug print
             -- ------NEW CODE ENDS
 
             let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
