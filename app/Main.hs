@@ -73,15 +73,15 @@ extractImages imageSetRef bs = do
     case req of
         Just r -> do
             let htmlContent = T.unpack $ content r :: String
-            -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
+            putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print -- this is not showing up the new blobs, only the first data:image, by testing I think the front is not sending the server this part of the code.
 
             -- ------NEW CODE
             -- htmlContent' <- readFromFile "app/test_file.txt" -- get data from testing file, not extension
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent'  -- Debug print
             let divs' = Scalpel.scrapeStringLike htmlContent getRowDivs :: Maybe [String]
             -- putStrLn $ "2. divs': " ++ show divs'  -- Debug print
-            let x = M.fromMaybe [] divs'
-            -- putStrLn $ "3. x: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
+            let x = M.fromMaybe [] divs' -- this is not showing up the new blobs, only the first data:image
+            -- putStrLn $ "3. xs: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
             let sources = map (\y -> Scalpel.scrapeStringLike y altTextAndImages) x
             -- putStrLn $ "4. sources: " ++ (L.intercalate "\n  source: " . map show $ sources)  -- Debug print
             let blobs = M.catMaybes $ filter cleanUp sources

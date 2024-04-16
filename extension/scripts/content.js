@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				if (
 					m.type === 'childList' &&
 					m.addedNodes.length > 0 &&
-					m.addedNodes[0].className === '' &&
+					// m.addedNodes[0].className === '' && // this is making the last blob not get send to the server, as well as some undesired broken images
 					m.addedNodes[0].tagName === 'DIV'
 				) {
 					console.log('added:', m.addedNodes)
