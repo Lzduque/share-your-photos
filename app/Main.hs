@@ -9,7 +9,6 @@ import qualified Data.Aeson as A
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Text.Lazy.Encoding as LTE
 import qualified Data.Text as T
-import qualified Text.HTML.TagSoup as TS
 import qualified Text.HTML.Scalpel as Scalpel
 import qualified Text.StringLike as StringLike
 import qualified Data.Set as Set
@@ -73,7 +72,6 @@ extractImages imageSetRef bs = do
     let req = A.decode bs :: Maybe ImageRequest  -- Use bs directly
     case req of
         Just r -> do
-            let tags = TS.parseTags $ content r
             let htmlContent = T.unpack $ content r :: String
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
 
