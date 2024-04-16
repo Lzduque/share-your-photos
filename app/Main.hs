@@ -52,8 +52,6 @@ getRowDivs =
   Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ do
     contents <- Scalpel.html Scalpel.anySelector
     return contents
-    -- Scalpel.htmls "img"
-    -- guard ("blob:" `isInfixOf` contents)
 
 altTextAndImages :: Scalpel.Scraper String [String]
 altTextAndImages =
@@ -80,26 +78,22 @@ extractImages imageSetRef bs = do
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
 
             -- ------NEW CODE
-            htmlContent' <- readFromFile "app/test_file.txt"
+            -- htmlContent' <- readFromFile "app/test_file.txt" -- get data from testing file, not extension
             -- putStrLn $ "1. htmlContent: " ++ show htmlContent'  -- Debug print
-            let divs' = Scalpel.scrapeStringLike htmlContent' getRowDivs :: Maybe [String]
+            let divs' = Scalpel.scrapeStringLike htmlContent getRowDivs :: Maybe [String]
             -- putStrLn $ "2. divs': " ++ show divs'  -- Debug print
             let x = M.fromMaybe [] divs'
             -- putStrLn $ "3. x: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
-
             let sources = map (\y -> Scalpel.scrapeStringLike y altTextAndImages) x
             -- putStrLn $ "4. sources: " ++ (L.intercalate "\n  source: " . map show $ sources)  -- Debug print
-
             let blobs = M.catMaybes $ filter cleanUp sources
-            putStrLn $ "5. blobs: " ++ (L.intercalate "\n  blob: " . map show $ blobs)  -- Debug print
+            -- putStrLn $ "5. blobs: " ++ (L.intercalate "\n  blob: " . map show $ blobs)  -- Debug print
             -- ------NEW CODE ENDS
 
-            let imgSrcs = [srcValue | TS.TagOpen "img" attrs <- tags, ("src", srcValue) <- attrs, "blob:" `T.isPrefixOf` srcValue]
-            -- putStrLn $ "--- imgSrcs: " ++ (L.intercalate "\n  " . map show  $ imgSrcs)  -- Debug print
             alreadyStored <- IORef.readIORef imageSetRef
-            let newSrcs = Set.difference (Set.fromList imgSrcs) alreadyStored
+            let newSrcs = Set.difference (Set.fromList (map T.pack $ concat blobs)) alreadyStored
             IORef.modifyIORef imageSetRef (`Set.union` newSrcs)
-            -- putStrLn $ "--- New sources: " ++ show newSrcs  -- Debug print
+            putStrLn $ "--- New sources: " ++ show newSrcs  -- Debug print
             if Set.null newSrcs
                 then do
                     -- MIO.liftIO $ putStrLn "a 7 a. No new images"  -- Debug print
@@ -110,32 +104,6 @@ extractImages imageSetRef bs = do
         Nothing -> do
             -- MIO.liftIO $ putStrLn "b 1. Failed to decode JSON"  -- Debug print
             return $ A.encode $ A.object ["error" A..= ("Failed to decode JSON" :: T.Text)]
-
-findFirstBlobImgSrc :: [TS.Tag T.Text] -> IO (Maybe T.Text)
-findFirstBlobImgSrc rowTags = do
-    let imgTags = filter isImgTag rowTags
-    -- putStrLn $ "5 a. Image Tags: " ++ show imgTags  -- Debug print
-
-    let imgSrcs = M.mapMaybe extractSrc imgTags
-    -- putStrLn $ "5 b. Image Sources: " ++ show imgSrcs  -- Debug print
-
-    let result = L.find isBlobImgSrc imgSrcs
-    putStrLn $ "5 c. Blobs: " ++ show result  -- Debug print
-    return result  -- Lift the Maybe result into IO
-
-  where
-    isImgTag :: TS.Tag T.Text -> Bool
-    isImgTag (TS.TagOpen tag _) = tag == "img"
-    isImgTag _ = False
-
-    extractSrc :: TS.Tag T.Text -> Maybe T.Text
-    extractSrc (TS.TagOpen _ attrs) =
-        let srcAttr = lookup "src" attrs  -- srcAttr is already Maybe T.Text, no need to pack
-        in srcAttr  -- Simply return srcAttr
-    extractSrc _ = Nothing
-
-    isBlobImgSrc :: T.Text -> Bool
-    isBlobImgSrc src = "blob:" `T.isPrefixOf` src
 
 readFromFile :: FilePath -> IO String
 readFromFile filePath = do
