@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 								document.querySelector('div[id="main"]')
 									.innerHTML,
 						})
-					}, 100)
+					}, 240)
 				}
 			})
 		})
