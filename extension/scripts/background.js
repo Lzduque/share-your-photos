@@ -36,6 +36,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	} else if (message.content) {
 		const body = JSON.stringify({content: message.content})
 		console.log('4. Message body sent: ', body)
+
 		fetch('http://localhost:3001/send-image', {
 			method: 'POST',
 			headers: {'Content-Type': 'application/json'},
