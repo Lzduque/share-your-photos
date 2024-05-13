@@ -49,9 +49,9 @@ app imageSetRef = do
 
 getRowDivs :: StringLike.StringLike str => Scalpel.Scraper str [str]
 getRowDivs =
-  Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ do
-    contents <- Scalpel.html Scalpel.anySelector
-    return contents
+  Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $
+    do
+      Scalpel.html Scalpel.anySelector
 
 altTextAndImages :: Scalpel.Scraper String [String]
 altTextAndImages =
@@ -74,32 +74,30 @@ extractImages imageSetRef bs = do
   case req of
     Just r -> do
       let htmlContent = T.unpack $ content r :: String
-      -- putStrLn $ "\n  1. htmlContent: " ++ show htmlContent  -- Debug print -- this is not showing up the new blobs, only the first data:image, by testing I think the front is not sending the server this part of the code.
+      -- putStrLn $ "1. htmlContent: " ++ show htmlContent  -- Debug print
 
       -- ------NEW CODE
       -- htmlContent' <- readFromFile "app/test_file.txt" -- get data from testing file, not extension
-      -- putStrLn $ "\n  1. htmlContent: " ++ show htmlContent'  -- Debug print
+      -- putStrLn $ "1. htmlContent: " ++ show htmlContent'  -- Debug print
       let divs' = Scalpel.scrapeStringLike htmlContent getRowDivs :: Maybe [String]
-      -- putStrLn $ "\n  2. divs': " ++ show divs' -- Debug print
-      let x = M.fromMaybe [] divs' -- this is not showing up the new blobs, only the first data:image
-      -- putStrLn $ "\n  3. xs: " ++ (L.intercalate "\n  x: " . map show $ x) -- Debug print
+      -- putStrLn $ "2. divs': " ++ show divs'  -- Debug print
+      let x = M.fromMaybe [] divs'
+      -- putStrLn $ "3. x: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
       let sources = map (\y -> Scalpel.scrapeStringLike y altTextAndImages) x
-      -- putStrLn $ "\n  4. sources: " ++ (L.intercalate "\n  source: " . map show $ sources) -- Debug print
+      -- putStrLn $ "4. sources: " ++ (L.intercalate "\n  source: " . map show $ sources)  -- Debug print
       let blobs = M.catMaybes $ filter cleanUp sources
-      -- putStrLn $ "\n  5. blobs: " ++ (L.intercalate "\n  blob: " . map show $ blobs) -- Debug print
-      -- the blob unit (map through it) will have an array of blobs from the samer role=row -> get the last one only!
-      let lastBlob = map last blobs
-
+      -- putStrLn $ "5. blobs: " ++ (L.intercalate "\n  blob: " . map show $ blobs)  -- Debug print
       -- ------NEW CODE ENDS
+
       alreadyStored <- IORef.readIORef imageSetRef
-      let newSrcs = Set.difference (Set.fromList (map T.pack lastBlob)) alreadyStored
-      IORef.modifyIORef imageSetRef (`Set.union` newSrcs)
-      -- putStrLn $ "--- New sources: " ++ show newSrcs -- Debug print
+      let newSrcs = Set.difference (Set.fromList (map T.pack $ concat blobs)) alreadyStored
+      putStrLn $ "--- New sources: " ++ show newSrcs -- Debug print
       if Set.null newSrcs
         then do
           -- MIO.liftIO $ putStrLn "a 7 a. No new images"  -- Debug print
           return $ A.encode $ A.object []
         else do
+          IORef.modifyIORef imageSetRef (`Set.union` newSrcs)
           -- MIO.liftIO $ putStrLn $ "a 7 b. Adding new images: " ++ show (Set.toList newSrcs)  -- Debug print
           return $ A.encode $ A.object ["imageUrls" A..= Set.toList newSrcs]
     Nothing -> do
