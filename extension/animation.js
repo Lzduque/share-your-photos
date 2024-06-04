@@ -1,7 +1,7 @@
 let queue = {}
 let counter = 0
 let currentIndex = 0
-let isGridMode = false // Track the current mode <--------------------
+let isGridMode = false // Track the current mode
 const imageContainer = document.getElementById('image-container')
 const img = document.createElement('img') // Create an img element
 const imageGrid = document.createElement('div') // Create a div for the grid

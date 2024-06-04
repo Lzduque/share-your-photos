@@ -1,16 +1,22 @@
 // Function to handle rows extraction and sending them to the background script
 function handleImageExtraction() {
 	const main = document.querySelector('div[id="main"]')
-
 	if (main) {
-		// console.log('objects: ', objects)
-		chrome.runtime.sendMessage({
-			content: main.innerHTML,
+		// Extract image URLs directly from the DOM
+		const imgElements = main.querySelectorAll('img')
+		const imgUrls = Array.from(imgElements).map((img) => img.src)
+
+		// Filter out duplicate image URLs
+		const uniqueImgUrls = [...new Set(imgUrls)]
+
+		// Send each unique image URL to the background script
+		uniqueImgUrls.forEach((url) => {
+			chrome.runtime.sendMessage({image: url})
 		})
 	}
 }
 
-// Listen for messages from the popup
+// Listen for messages from the background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === 'startObserving') {
 		// Extract and send existing rows immediately
@@ -18,7 +24,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((m) => {
-				// console.log('Mutation className: ', m.addedNodes[0].className)
 				if (
 					m.type === 'childList' &&
 					m.addedNodes.length > 0 &&
@@ -27,11 +32,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 					m.addedNodes[0].tagName === 'DIV'
 				) {
 					setTimeout(() => {
-						chrome.runtime.sendMessage({
-							content:
-								document.querySelector('div[id="main"]')
-									.innerHTML,
-						})
+						handleImageExtraction()
 					}, 240)
 				}
 			})
