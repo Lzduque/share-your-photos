@@ -35,7 +35,7 @@ I want to make a Google Chrome extension + Haskell server that can: the extensio
 
 -   WhatsApp Web Integration: Carefully review WhatsApp's terms of service to ensure compliance. The extension's functionality, especially regarding data extraction, might be subject to limitations or restrictions.
 -   Privacy and Security: Implement robust data handling practices to protect user privacy, especially when processing message content from WhatsApp Web.
--   Performance: Optimize the extension and server for performance, minimizing the impact on the user's browser and server load, particularly when monitoring for new content and processing data in real time.
+-   Performance: Optimize the extension and server for performance, minimizing the impact on the user's browser and server load, particularly when monitoring for new content and processing data in real-time.
 -   User Experience: Design the extension's UI and the custom page to be user-friendly, ensuring clear navigation and interaction, especially for displaying top-voted images.
 
 # Development Steps
@@ -46,3 +46,62 @@ I want to make a Google Chrome extension + Haskell server that can: the extensio
 -   Optimize: Based on testing, refine the performance and user experience, optimizing data processing, animation display, and user interaction elements.
 
 Given the complexity of this project, it's essential to approach it in manageable stages, validating each component before integrating them into a cohesive system.
+
+# Getting Started
+
+1.  **Clone the Repository**
+    ```sh
+    git clone https://github.com/Lzduque/share-your-photos.git
+    cd share-your-photos
+    ```
+
+
+2.  **Install Frontend Dependencies**
+    Navigate to the frontend directory and install the required dependencies using npm.
+    
+    ```sh
+    cd frontend
+    npm install
+    ```
+
+
+3.  **Install Backend Dependencies**
+    Navigate to the backend directory and install the required Haskell dependencies.
+
+    ```sh
+    cd backend
+    # Install dependencies, assuming you use Cabal or Stack for Haskell project management
+    # For Cabal:
+    cabal update
+    cabal install
+    
+    # For Stack:
+    stack setup
+    stack build
+    ```
+
+
+4.  **Start the Backend Server**
+    Start the Haskell backend server. This will serve the backend API at http://localhost:3001/.
+    
+    ```sh
+    cd backend
+    # For Cabal:
+    cabal run
+    
+    # For Stack:
+    stack run
+    ```
+
+
+5.  **Load the Chrome Extension**
+- Open Chrome and go to chrome://extensions/.
+- Enable "Developer mode" using the toggle switch at the top right.
+- Click "Load unpacked" and select the directory containing your extension's manifest.json file.
+
+
+6.  **Start Monitoring WhatsApp Web**
+- Go to https://web.whatsapp.com/ and log in.
+- Go to the conversation chat you want to display the images from.
+- Click on the extension icon in Chrome and press the "Send Image URL" button to start monitoring.
+- The animation page will automatically open in a new tab after you start monitoring. You can also access it at http://localhost:3000/. All new images will also be added to the animation, one by one automatically.
