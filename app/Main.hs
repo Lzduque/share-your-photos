@@ -15,7 +15,7 @@ import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Text.Lazy.Encoding as LTE
 import qualified GHC.Generics as Generics
-import System.IO
+import System.IO (IOMode (ReadMode), hGetContents, openFile)
 import qualified Text.HTML.Scalpel as Scalpel
 import qualified Text.StringLike as StringLike
 import qualified Web.Scotty as Scotty
@@ -60,9 +60,9 @@ altTextAndImages =
     -- 2. Use Any to access all the relevant content from the the currently
     -- selected img tag.
     srcUrl <- Scalpel.attr "src" Scalpel.anySelector
-    Control.guard ("blob:" `T.isPrefixOf` (StringLike.fromString srcUrl))
+    Control.guard ("blob:" `T.isPrefixOf` StringLike.fromString srcUrl)
     -- 3. Combine the retrieved content into the desired final result.
-    return (srcUrl)
+    return srcUrl
 
 cleanUp :: Maybe [String] -> Bool
 cleanUp (Just []) = False
@@ -83,7 +83,7 @@ extractImages imageSetRef bs = do
       -- putStrLn $ "2. divs': " ++ show divs'  -- Debug print
       let x = M.fromMaybe [] divs'
       -- putStrLn $ "3. x: " ++ (L.intercalate "\n  x: " . map show $ x)  -- Debug print
-      let sources = map (\y -> Scalpel.scrapeStringLike y altTextAndImages) x
+      let sources = map (`Scalpel.scrapeStringLike` altTextAndImages) x
       -- putStrLn $ "4. sources: " ++ (L.intercalate "\n  source: " . map show $ sources)  -- Debug print
       let blobs = M.catMaybes $ filter cleanUp sources
       -- putStrLn $ "5. blobs: " ++ (L.intercalate "\n  blob: " . map show $ blobs)  -- Debug print
