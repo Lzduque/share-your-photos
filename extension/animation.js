@@ -34,7 +34,6 @@ function hideImage() {
 	imageContainer.style.opacity = 0 // Fade the image out before changing the source
 }
 
-//to add image to the QUEUE -- for now it will modify the queue variable (not ideal), since it acts as the state.
 // Add image to the queue
 const addImageToQueue = (image) => {
 	queue[counter++] = image // Use counter as the key and increment it
@@ -44,7 +43,7 @@ const addImageToQueue = (image) => {
 // Listen for messages from the background script (to receive new image URLs)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	if (message.image) {
-		// addImageToGrid(message.image)
+		// addImageToGrid(message.image);
 		addImageToQueue(message.image)
 	}
 })
