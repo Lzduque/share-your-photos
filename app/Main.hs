@@ -49,8 +49,7 @@ app imageSetRef = do
 getRowDivs :: StringLike.StringLike str => Scalpel.Scraper str [str]
 getRowDivs =
   Scalpel.chroots ("div" Scalpel.@: ["role" Scalpel.@= "row"]) $ do
-    contents <- Scalpel.html Scalpel.anySelector
-    return contents
+    Scalpel.html Scalpel.anySelector
 
 altTextAndImages :: Scalpel.Scraper String [String]
 altTextAndImages =
