@@ -24,12 +24,18 @@
           inherit system;
           inherit config;
         };
-      in {
+      in
+      with pkgs; {
         # nix build .#share-your-photos
         packages.share-your-photos = pkgs.haskellPackages.share-your-photos;
 
         # nix build
         defaultPackage = self.packages.${system}.share-your-photos;
+
+        # nix develop
+        devShells.default = mkShell {
+          buildInputs = [ zlib ];
+        };
       }
     );
 }
