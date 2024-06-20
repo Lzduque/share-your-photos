@@ -89,17 +89,10 @@ extractImages imageSetRef bs = do
       -- putStrLn $ "5. blobs: " ++ (L.intercalate "\n  blob: " . map show $ blobs)  -- Debug print
       -- ------NEW CODE ENDS
 
-      alreadyStored <- IORef.readIORef imageSetRef
-      let newSrcs = Set.difference (Set.fromList (map T.pack $ concat blobs)) alreadyStored
+      newSrcs <- IORef.atomicModifyIORef imageSetRef $ \alreadyStored ->
+        (alreadyStored `Set.union` Set.difference (Set.fromList (map T.pack $ concat blobs)) alreadyStored, alreadyStored)
       putStrLn $ "--- New sources: " ++ show newSrcs -- Debug print
-      if Set.null newSrcs
-        then do
-          -- MIO.liftIO $ putStrLn "a 7 a. No new images"  -- Debug print
-          return $ A.encode $ A.object []
-        else do
-          IORef.modifyIORef imageSetRef (`Set.union` newSrcs)
-          -- MIO.liftIO $ putStrLn $ "a 7 b. Adding new images: " ++ show (Set.toList newSrcs)  -- Debug print
-          return $ A.encode $ A.object ["imageUrls" A..= Set.toList newSrcs]
+      return $ A.encode $ A.object ["imageUrls" A..= Set.toList newSrcs]
     Nothing -> do
       -- MIO.liftIO $ putStrLn "b 1. Failed to decode JSON"  -- Debug print
       return $ A.encode $ A.object ["error" A..= ("Failed to decode JSON" :: T.Text)]
