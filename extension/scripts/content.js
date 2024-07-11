@@ -1,6 +1,13 @@
 // Use IIFE to avoid global scope issues
 (function() {
+  // imageDB :: Map String {id :: String, url :: String}
   let imageDB = {}
+
+  // How long to wait for the DOM to update with blobs
+  const domTimeoutMS = 1000
+
+  // Synchronize the slideshow to the images every 5 seconds
+  const syncIntervalMS = 5000
 
   // TODO: remove this
   const handleImageExtraction = () => {
@@ -33,18 +40,37 @@
       if (images.length > 0) {
         const lastImage = {
           id,
-          src: images[images.length - 1].src
+          url: images[images.length - 1].src
         }
         imageDB[id] = lastImage
-        console.log(imageDB)
       }
     }
   }
 
+  // Send the images to the slideshow
+  const sendImageDB = () => {
+    console.log('imageDB:', imageDB)
+    chrome.runtime.sendMessage({
+      images: imageDB
+    })
+  }
+
+  // Synchronize the slideshow to the images
+  setInterval(sendImageDB, syncIntervalMS)
+
   // Listen for messages from the popup
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'startObserving') {
-      // TODO: Don't forget to send images on first load
+      // Send images on first load
+      const main = document.querySelector('div[id="main"]')
+      if (main) {
+        const rows = main.querySelectorAll('div[role="row"]')
+        Array.from(rows).forEach(row => {
+          setTimeout(() => {
+            addNewImage(row)
+          }, domTimeoutMS)
+        })
+      }
 
       // OLD:
       // handleImageExtraction()
@@ -57,7 +83,7 @@
               // Wait for the DOM to update with blobs
               setTimeout(() => {
                 addNewImage(node)
-              }, 1000)
+              }, domTimeoutMS)
             })
           })
       })
