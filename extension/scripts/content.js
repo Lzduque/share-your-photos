@@ -16,6 +16,10 @@
     return document.querySelector(selector);
   };
 
+  const sleep = async ms => {
+     await new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   // Is this the kind of mutation that has new images in the chat?
   const isGoodMutation = m => {
     return (
@@ -50,45 +54,42 @@
     })
   }
 
-  const addImages = (imageNodes) => {
-    Array.from(imageNodes).forEach(node => {
+  const addImages = async imageNodes => {
+    Array.from(imageNodes).forEach(async node => {
       // Wait for the DOM to update with blobs
-      setTimeout(() => {
-        addNewImage(node)
-      }, domTimeoutMS)
+      await sleep(domTimeoutMS)
+      addNewImage(node)
     })
   }
 
   // Listen for messages from the popup
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.action === 'startObserving') {
       // Send images on first load
-      afterElementLoaded('div[id="main"]').then(main => {
-        // Wait extra time for the DOM to populate with rows
-        setTimeout(() => {
-          const rows = main.querySelectorAll('div[role="row"]')
-          console.log('initial rows:', rows)
-          addImages(rows)
+      const main = await afterElementLoaded('div[id="main"]')
+      // Wait extra time for the DOM to populate with rows
+      await sleep(domTimeoutMS)
+      const rows = main.querySelectorAll('div[role="row"]')
+      console.log('initial rows:', rows)
+      await addImages(rows)
 
-          // Repeatedly synchronize the slideshow to the images
-          setInterval(sendImageDB, syncIntervalMS)
+      // Repeatedly synchronize the slideshow to the images
+      setInterval(sendImageDB, syncIntervalMS)
 
-          const observer = new MutationObserver(mutations => {
-            mutations
-              .filter(isGoodMutation)
-              .forEach(m => {
-                addImages(m.addedNodes)
-              })
+      const observer = new MutationObserver(mutations => {
+        mutations
+          .filter(isGoodMutation)
+          .forEach(async m => {
+            await addImages(m.addedNodes)
           })
+      })
 
-          // Start observing the target node for configured mutations
-          observer.observe(document.body, {
-            childList: true, // Observe for the addition/removal of child nodes
-            characterData: true, // Observe data changes in text nodes
-            attributes: true, // Observe attribute changes
-            subtree: true, // Observe descendants of the target node
-          })
-        }, domTimeoutMS)
+      // Start observing the target node for configured mutations
+      observer.observe(document.body, {
+        childList: true, // Observe for the addition/removal of child nodes
+        characterData: true, // Observe data changes in text nodes
+        attributes: true, // Observe attribute changes
+        subtree: true, // Observe descendants of the target node
       })
     }
   })

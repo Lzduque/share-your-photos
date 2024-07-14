@@ -32,7 +32,7 @@ const hideImage = () => {
   imageContainer.style.opacity = 0
 }
 
-// Change the image every 5 seconds in slideshow mode
+// Animate the slideshow
 setInterval(() => {
   hideImage()
   setTimeout(displayNextImage, 1000) // Change the image after it fades out
