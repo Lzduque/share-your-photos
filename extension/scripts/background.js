@@ -1,7 +1,7 @@
 // Keep track of the animation tab ID
 let animationTabId = null
 
-// imageDB :: Map String {order :: Integer, id :: String, url :: String}
+// imageDB :: Map String {id :: String, url :: String, reactions :: Integer, order :: Integer}
 let imageDB = {}
 
 const startMonitoringWhatsApp = () => {
@@ -31,20 +31,26 @@ const startMonitoringWhatsApp = () => {
 }
 
 chrome.runtime.onMessage.addListener(async (message, _sender, _sendResponse) => {
+  console.log('message received:', message)
   if (message.action === 'startMonitoringWhatsApp') {
     startMonitoringWhatsApp()
-  } else if (message.images) {
+  } else if (message.images && message.from === 'content') {
     // Receiving images from WhatsApp Web tab
     Object.values(message.images)
-      .forEach(({id, url}) => {
-        // If the image is already in the database, update its URL but leave it in the same order
+      .forEach(({id, url, reactions}) => {
+        // If the image is already in the database, update its URL and reactions but leave it in the same order
         if (imageDB[id]) {
-          imageDB[id].url = url
+          imageDB[id] = {
+            ...imageDB[id],
+            url,
+            reactions,
+          }
         } else {
           imageDB[id] = {
-            order: Object.entries(imageDB).length,
             id,
             url,
+            reactions,
+            order: Object.entries(imageDB).length,
           }
         }
       })
@@ -53,6 +59,7 @@ chrome.runtime.onMessage.addListener(async (message, _sender, _sendResponse) => 
     if (animationTabId !== null) {
       chrome.tabs.sendMessage(animationTabId, {
         images: imageDB,
+        from: 'background',
       })
     }
   }

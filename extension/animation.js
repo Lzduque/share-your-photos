@@ -1,12 +1,13 @@
-// imageDB :: Map String {order :: Integer, id :: String, url :: String}
+// imageDB :: Map String {id :: String, url :: String, reactions :: String, order :: Integer}
 let imageDB = {}
 let imagePointer = -1
 const slideshowHoldTime = 5000 // milliseconds
 const imageContainer = document.getElementById('image-container')
 
 // Listen for messages from the background script (to receive new images)
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.images) {
+chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
+  console.log('message received:', message)
+  if (message.images && message.from === 'background') {
     imageDB = message.images
     console.log('received imageDB:', imageDB)
   }
@@ -21,9 +22,18 @@ const displayNextImage = () => {
     
     const img = document.createElement('img')
     img.src = nextImage.url
+
+    const reactions = document.createElement('div')
+    reactions.className = 'reactions'
+    reactions.textContent = nextImage.reactions
+    console.log('nextImage:', nextImage)
+    console.log('reactions:', reactions)
     
     imageContainer.innerHTML = ''
     imageContainer.appendChild(img)
+    if (nextImage.reactions) {
+      imageContainer.appendChild(reactions)
+    }
     imageContainer.style.opacity = 1
   }
 }
@@ -38,4 +48,4 @@ setInterval(() => {
   setTimeout(displayNextImage, 1000) // Change the image after it fades out
 }, slideshowHoldTime)
 
-console.log('animation start')
+console.log('Starting slideshow')

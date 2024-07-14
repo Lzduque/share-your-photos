@@ -1,7 +1,6 @@
 // Use IIFE to avoid global scope issues
-(function() {
-  // TODO: add votes :: Integer
-  // imageDB :: Map String {id :: String, url :: String}
+(async () => {
+  // imageDB :: Map String {id :: String, url :: String, reactions :: String}
   let imageDB = {}
 
   // How long to wait for the DOM to update with blobs
@@ -38,13 +37,12 @@
     if (id) {
       const images = node.querySelectorAll('img[src^="blob:https://web.whatsapp.com/"]')
       if (images.length > 0) {
-        // TODO: get votes
-        // querySelector('button') where aria-label = "reaction "
-        //   or aria-label = "Reactions .* {n} in total"
         const lastImage = images[images.length - 1]
+        const reactions = node.querySelector('button')?.ariaLabel || ''
         imageDB[id] = {
           id,
-          url: lastImage.src
+          url: lastImage.src,
+          reactions,
         }
       }
     }
@@ -54,7 +52,8 @@
   const sendImageDB = () => {
     console.log('sending imageDB:', imageDB)
     chrome.runtime.sendMessage({
-      images: imageDB
+      images: imageDB,
+      from: 'content',
     })
   }
 
@@ -67,8 +66,10 @@
   }
 
   // Listen for messages from the popup
-  chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-    if (request.action === 'startObserving') {
+  chrome.runtime.onMessage.addListener(async (message, _sender, _sendResponse) => {
+    console.log('message received:', message)
+    let syncIntervalId = null
+    if (message.action === 'startObserving') {
       // Send images on first load
       const main = await afterElementLoaded('div[id="main"]')
       // Wait extra time for the DOM to populate with rows
@@ -78,7 +79,7 @@
       await addImages(rows)
 
       // Repeatedly synchronize the slideshow to the images
-      setInterval(sendImageDB, syncIntervalMS)
+      syncIntervalId = setInterval(sendImageDB, syncIntervalMS)
 
       const observer = new MutationObserver(mutations => {
         mutations
@@ -95,6 +96,8 @@
         attributes: true, // Observe attribute changes
         subtree: true, // Observe descendants of the target node
       })
+    } else if (message.action === 'stopObserving') {
+      clearInterval(syncIntervalId);
     }
   })
 })();
