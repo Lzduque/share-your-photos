@@ -8,6 +8,7 @@ const imageContainer = document.getElementById('image-container')
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.images) {
     imageDB = message.images
+    console.log('received imageDB:', imageDB)
   }
 })
 

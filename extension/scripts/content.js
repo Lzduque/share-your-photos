@@ -9,8 +9,15 @@
   // Synchronize the slideshow to the images every 5 seconds
   const syncIntervalMS = 5000
 
+  const afterElementLoaded = async selector => {
+    while (document.querySelector(selector) === null) {
+      await new Promise(resolve => requestAnimationFrame(resolve))
+    }
+    return document.querySelector(selector);
+  };
+
   // Is this the kind of mutation that has new images in the chat?
-  const goodMutation = m => {
+  const isGoodMutation = m => {
     return (
       m.type === 'childList' &&
         m.addedNodes.length > 0 &&
@@ -37,52 +44,52 @@
 
   // Send the images to the slideshow
   const sendImageDB = () => {
-    console.log('imageDB:', imageDB)
+    console.log('sending imageDB:', imageDB)
     chrome.runtime.sendMessage({
       images: imageDB
     })
   }
 
-  // Synchronize the slideshow to the images
-  setInterval(sendImageDB, syncIntervalMS)
+  const addImages = (imageNodes) => {
+    Array.from(imageNodes).forEach(node => {
+      // Wait for the DOM to update with blobs
+      setTimeout(() => {
+        addNewImage(node)
+      }, domTimeoutMS)
+    })
+  }
 
   // Listen for messages from the popup
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'startObserving') {
       // Send images on first load
-      const main = document.querySelector('div[id="main"]')
-      if (main) {
-        const rows = main.querySelectorAll('div[role="row"]')
-        Array.from(rows).forEach(row => {
-          setTimeout(() => {
-            addNewImage(row)
-          }, domTimeoutMS)
-        })
-      }
+      afterElementLoaded('div[id="main"]').then(main => {
+        // Wait extra time for the DOM to populate with rows
+        setTimeout(() => {
+          const rows = main.querySelectorAll('div[role="row"]')
+          console.log('initial rows:', rows)
+          addImages(rows)
 
-      const observer = new MutationObserver(mutations => {
-        mutations
-          .filter(goodMutation)
-          .forEach(m => {
-            Array.from(m.addedNodes).forEach(node => {
-              // Wait for the DOM to update with blobs
-              setTimeout(() => {
-                addNewImage(node)
-              }, domTimeoutMS)
-            })
+          // Repeatedly synchronize the slideshow to the images
+          setInterval(sendImageDB, syncIntervalMS)
+
+          const observer = new MutationObserver(mutations => {
+            mutations
+              .filter(isGoodMutation)
+              .forEach(m => {
+                addImages(m.addedNodes)
+              })
           })
+
+          // Start observing the target node for configured mutations
+          observer.observe(document.body, {
+            childList: true, // Observe for the addition/removal of child nodes
+            characterData: true, // Observe data changes in text nodes
+            attributes: true, // Observe attribute changes
+            subtree: true, // Observe descendants of the target node
+          })
+        }, domTimeoutMS)
       })
-
-      // Configuration of the observer:
-      const config = {
-        childList: true, // Observe for the addition/removal of child nodes
-        characterData: true, // Observe data changes in text nodes
-        attributes: true, // Observe attribute changes
-        subtree: true, // Observe descendants of the target node
-      }
-
-      // Start observing the target node for configured mutations
-      observer.observe(document.body, config)
     }
   })
 })();
