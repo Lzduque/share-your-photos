@@ -9,18 +9,6 @@
   // Synchronize the slideshow to the images every 5 seconds
   const syncIntervalMS = 5000
 
-  // TODO: remove this
-  const handleImageExtraction = () => {
-    const imageNodes = document.querySelectorAll('div[id="main"] div[role="row"] img[src^="blob:https://web.whatsapp.com/"]')
-    const images = Array.from(imageNodes).map(img => img.src)
-
-    if (images.length > 0) {
-      chrome.runtime.sendMessage({
-        images
-      })
-    }
-  }
-
   // Is this the kind of mutation that has new images in the chat?
   const goodMutation = m => {
     return (
@@ -71,9 +59,6 @@
           }, domTimeoutMS)
         })
       }
-
-      // OLD:
-      // handleImageExtraction()
 
       const observer = new MutationObserver(mutations => {
         mutations
