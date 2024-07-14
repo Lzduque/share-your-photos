@@ -1,5 +1,6 @@
 // Use IIFE to avoid global scope issues
 (function() {
+  // TODO: add votes :: Integer
   // imageDB :: Map String {id :: String, url :: String}
   let imageDB = {}
 
@@ -37,11 +38,14 @@
     if (id) {
       const images = node.querySelectorAll('img[src^="blob:https://web.whatsapp.com/"]')
       if (images.length > 0) {
-        const lastImage = {
+        // TODO: get votes
+        // querySelector('button') where aria-label = "reaction "
+        //   or aria-label = "Reactions .* {n} in total"
+        const lastImage = images[images.length - 1]
+        imageDB[id] = {
           id,
-          url: images[images.length - 1].src
+          url: lastImage.src
         }
-        imageDB[id] = lastImage
       }
     }
   }
