@@ -18,3 +18,7 @@ A Chrome extension that watches a WhatsApp Web conversation for images and turns
 1. Go to https://web.whatsapp.com/ and log in.
 2. Go to the conversation chat you want to display the images from.
 3. Click on the extension icon in Chrome and press the "Start slideshow" button to start monitoring. The animation page will automatically open in a new tab after you start monitoring. All new images will also be added to the animation, one by one automatically.
+
+## Known limitations
+
+Images must be uploaded to the chat one at a time. When a user uploads a bunch of photos at once, WhatsApp groups them together and they can no longer be extracted in the same way.
