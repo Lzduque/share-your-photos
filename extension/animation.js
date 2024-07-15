@@ -26,8 +26,6 @@ const displayNextImage = () => {
     const reactions = document.createElement('div')
     reactions.className = 'reactions'
     reactions.textContent = nextImage.reactions
-    console.log('nextImage:', nextImage)
-    console.log('reactions:', reactions)
     
     imageContainer.innerHTML = ''
     imageContainer.appendChild(img)
