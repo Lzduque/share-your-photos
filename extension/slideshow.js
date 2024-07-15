@@ -13,6 +13,15 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
   }
 })
 
+const parseReactions = ariaLabel => {
+  return (
+    ariaLabel === '' ? ''
+      : ariaLabel.startsWith('reaction ') ? `Reaction: ${ariaLabel.split('reaction ')[1]}`
+      : ariaLabel.startsWith('Reactions ') ? `Reactions: ${ariaLabel.split('Reactions ')[1]}`
+      : ''
+  )
+}
+
 const displayNextImage = () => {
   console.log('displayNextImage')
   const images = Object.values(imageDB).sort((a, b) => a.order - b.order)
@@ -25,7 +34,7 @@ const displayNextImage = () => {
 
     const reactions = document.createElement('div')
     reactions.className = 'reactions'
-    reactions.textContent = nextImage.reactions
+    reactions.textContent = parseReactions(nextImage.reactions)
     
     imageContainer.innerHTML = ''
     imageContainer.appendChild(img)
