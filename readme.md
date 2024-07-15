@@ -11,7 +11,7 @@ A Chrome extension that watches a WhatsApp Web conversation for images and turns
 1. Clone this repository your computer: `git clone https://github.com/Lzduque/share-your-photos.git`
 2. Open Chrome and go to [chrome://extensions/](chrome://extensions/).
 3. Enable "Developer mode" using the toggle switch at the top right.
-4. Click "Load unpacked" and select the directory where you cloned this repository.
+4. Click "Load unpacked" and select the `extension` directory.
 
 ### Start monitoring WhatsApp Web
 
