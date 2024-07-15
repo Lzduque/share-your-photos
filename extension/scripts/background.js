@@ -1,15 +1,15 @@
-// Keep track of the animation tab ID
-let animationTabId = null
+// Keep track of the slideshow tab ID
+let slideshowTabId = null
 
 // imageDB :: Map String {id :: String, url :: String, reactions :: Integer, order :: Integer}
 let imageDB = {}
 
 const startMonitoringWhatsApp = () => {
-  // Open the animation page in a new tab
+  // Open the slideshow page in a new tab
   chrome.tabs.create(
-    {url: chrome.runtime.getURL('animation.html')},
+    {url: chrome.runtime.getURL('slideshow.html')},
     (tab) => {
-      animationTabId = tab.id
+      slideshowTabId = tab.id
     }
   )
   // Find the WhatsApp Web tab
@@ -55,9 +55,9 @@ chrome.runtime.onMessage.addListener(async (message, _sender, _sendResponse) => 
         }
       })
 
-    // Forward the images to the animation tab
-    if (animationTabId !== null) {
-      chrome.tabs.sendMessage(animationTabId, {
+    // Forward the images to the slideshow tab
+    if (slideshowTabId !== null) {
+      chrome.tabs.sendMessage(slideshowTabId, {
         images: imageDB,
         from: 'background',
       })

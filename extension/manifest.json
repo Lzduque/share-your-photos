@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Image Sender",
+  "name": "Slideshow",
   "version": "1.0",
-  "description": "Sends a fixed image URL to the Haskell server",
+  "description": "Uses WhatsApp to make a slideshow.",
   "permissions": [
       "tabs",
       "activeTab",
@@ -35,7 +35,7 @@
   ],
   "web_accessible_resources": [
     {
-        "resources": ["animation.html", "scripts/animation.js"],
+        "resources": ["slideshow.html", "scripts/slideshow.js"],
         "matches": ["<all_urls>"]
     }
   ]
