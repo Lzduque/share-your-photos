@@ -9,6 +9,9 @@
   // Synchronize the slideshow to the images every 5 seconds
   const syncIntervalMS = 5000
 
+  // The identifier for what WhatsApp uses as a container for messages
+  const rowSelector = 'div[role="row"]'
+
   const afterElementLoaded = async selector => {
     while (document.querySelector(selector) === null) {
       await new Promise(resolve => requestAnimationFrame(resolve))
@@ -21,24 +24,53 @@
   }
 
   // Is this the kind of mutation that has new images in the chat?
-  const isGoodMutation = m => {
+  const isAddedImageMutation = m => {
     return (
       m.type === 'childList' &&
         m.addedNodes.length > 0 &&
-        m.addedNodes[0] &&
-        m.addedNodes[0].className === '' &&
-        m.addedNodes[0].tagName === 'DIV'
+        m.addedNodes[0]?.className === '' &&
+        m.addedNodes[0]?.tagName === 'DIV'
     )
   }
 
-  // Get new image within the node and add id to the DB
-  const addNewImage = (node) => {
-    const id = node.firstElementChild?.getAttribute('data-id')
+  // Is this the kind of mutation that affected reactions in the chat?
+  const isReactionMutation = m => {
+    const addedReaction = (
+      m.type === 'childList' &&
+        m.addedNodes.length > 0 &&
+        m.addedNodes[0]?.tagName === 'BUTTON' &&
+        m.addedNodes[0]?.ariaLabel.toLowerCase().startsWith('reaction')
+    )
+
+    const updatedReaction = (
+      m.type === 'attributes' &&
+        m.target?.tagName === 'BUTTON' &&
+        m.attributeName === 'aria-label'
+    )
+
+    const removedReaction = (
+      m.type === 'childList' &&
+        m.removedNodes.length > 0 &&
+        m.removedNodes[0]?.tagName === 'BUTTON' &&
+        m.removedNodes[0]?.ariaLabel.toLowerCase().startsWith('reaction')
+    )
+
+    // Debugging lines
+    addedReaction && console.log('added reaction')
+    updatedReaction && console.log('updated reaction')
+    removedReaction && console.log('removed reaction')
+
+    return addedReaction || updatedReaction || removedReaction
+  }
+
+  // Get new or updated image within the row and add it to the DB
+  const updateImage = rowNode => {
+    const id = rowNode.firstElementChild?.getAttribute('data-id')
     if (id) {
-      const images = node.querySelectorAll('img[src^="blob:https://web.whatsapp.com/"]')
+      const images = rowNode.querySelectorAll('img[src^="blob:https://web.whatsapp.com/"]')
       if (images.length > 0) {
         const lastImage = images[images.length - 1]
-        const reactions = node.querySelector('button')?.ariaLabel || ''
+        const reactions = rowNode.querySelector('button')?.ariaLabel || ''
         imageDB[id] = {
           id,
           url: lastImage.src,
@@ -57,11 +89,11 @@
     })
   }
 
-  const addImages = async imageNodes => {
-    Array.from(imageNodes).forEach(async node => {
+  const updateImages = async imageRowNodes => {
+    Array.from(imageRowNodes).forEach(async rowNode => {
       // Wait for the DOM to update with blobs
       await sleep(domTimeoutMS)
-      addNewImage(node)
+      updateImage(rowNode)
     })
   }
 
@@ -74,23 +106,30 @@
       const main = await afterElementLoaded('div[id="main"]')
       // Wait extra time for the DOM to populate with rows
       await sleep(domTimeoutMS)
-      const rows = main.querySelectorAll('div[role="row"]')
+      const rows = main.querySelectorAll(rowSelector)
       console.log('initial rows:', rows)
-      await addImages(rows)
+      await updateImages(rows)
 
       // Repeatedly synchronize the slideshow to the images
       syncIntervalId = setInterval(sendImageDB, syncIntervalMS)
 
       const observer = new MutationObserver(mutations => {
         mutations
-          .filter(isGoodMutation)
+          .filter(isAddedImageMutation)
           .forEach(async m => {
-            await addImages(m.addedNodes)
+            await updateImages(m.addedNodes)
+          })
+
+        mutations
+          .filter(isReactionMutation)
+          .forEach(async m => {
+            await sleep(domTimeoutMS)
+            await updateImage(m.target.closest(rowSelector))
           })
       })
 
       // Start observing the target node for configured mutations
-      observer.observe(document.body, {
+      observer.observe(main, {
         childList: true, // Observe for the addition/removal of child nodes
         characterData: true, // Observe data changes in text nodes
         attributes: true, // Observe attribute changes
