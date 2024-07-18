@@ -17,8 +17,8 @@
   const parseReactions = ariaLabel => {
     return (
       ariaLabel === '' ? ''
-        : ariaLabel.startsWith('reaction ') ? `Reaction: ${ariaLabel.split('reaction ')[1]}`
-        : ariaLabel.startsWith('Reactions ') ? `Reactions: ${ariaLabel.split('Reactions ')[1]}`
+        : ariaLabel.startsWith('reaction ') ? `${ariaLabel.split('reaction ')[1]}`
+        : ariaLabel.startsWith('Reactions ') ? `${ariaLabel.split('Reactions ')[1]}`
         : ''
     )
   }
