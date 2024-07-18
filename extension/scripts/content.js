@@ -8,8 +8,8 @@
   // How long to wait for the DOM to update with blobs
   const domTimeoutMS = 1000
 
-  // Synchronize the slideshow to the images every 5 seconds
-  const syncIntervalMS = 5000
+  // Synchronize the slideshow to the images every 2 seconds
+  const syncIntervalMS = 2000
 
   // The identifier for what WhatsApp uses as a container for messages
   const rowSelector = 'div[role="row"]'
