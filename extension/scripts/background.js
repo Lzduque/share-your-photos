@@ -57,6 +57,7 @@
       createSlideshow()
       startMonitoringWhatsApp()
     } else if (message.images && sender.tab?.title === 'WhatsApp') {
+      console.log('received images:', message.images)
       // Receiving images from WhatsApp Web tab
       Object.values(message.images)
         .forEach(({id, url, reactions}) => {
@@ -87,6 +88,7 @@
 
       // Forward the images to the slideshow tab
       if (slideshowTabId !== null) {
+        console.log('sending imageDB:', imageDB)
         chrome.tabs.sendMessage(slideshowTabId, {
           images: imageDB,
         })
