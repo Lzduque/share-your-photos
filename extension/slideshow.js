@@ -7,7 +7,7 @@
   const imageContainer = document.getElementById('image-container')
 
   // Listen for messages from the background script (to receive new images)
-  chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
+  chrome.runtime.onMessage.addListener((message, sender) => {
     if (message.images && !sender.tab) {
       imageDB = message.images
       console.log('received imageDB:', imageDB)

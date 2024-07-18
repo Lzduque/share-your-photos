@@ -1,7 +1,8 @@
 // Use IIFE to avoid global scope issues
 (async () => {
-  // Keep track of the slideshow tab ID
+  // Keep track of the tabs
   let slideshowTabId = null
+  let contentTabId = null
 
   // imageDB :: Map String {id :: String, url :: String, reactions :: Integer, order :: Integer}
   let imageDB = {}
@@ -25,13 +26,14 @@
     chrome.tabs.query({url: '*://web.whatsapp.com/*'}, tabs => {
       if (tabs.length >= 1) {
         const tab = tabs[0]
+        contentTabId = tab.id
         // Inject the content script into the WhatsApp Web tab
         chrome.scripting.executeScript({
-          target: {tabId: tab.id},
+          target: {tabId: contentTabId},
           files: ['scripts/content.js'],
         }, () => {
           // Once the content script is injected, send a message to start observing
-          chrome.tabs.sendMessage(tab.id, {
+          chrome.tabs.sendMessage(contentTabId, {
             action: 'startObserving',
           })
         })
@@ -39,7 +41,15 @@
     })
   }
 
-  chrome.runtime.onMessage.addListener(async (message, sender, _sendResponse) => {
+  chrome.tabs.onRemoved.addListener(tabId => {
+    if (tabId === slideshowTabId) {
+      chrome.tabs.sendMessage(contentTabId, {
+        action: 'stopObserving',
+      })
+    }
+  })
+
+  chrome.runtime.onMessage.addListener(async (message, sender) => {
     if (message.action === 'startSlideshow') {
       resetImageDB()
       createSlideshow()

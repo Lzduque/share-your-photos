@@ -2,6 +2,8 @@
 (async () => {
   // imageDB :: Map String {id :: String, url :: String, reactions :: String}
   let imageDB = {}
+  let syncIntervalId = null
+  let observer = null
 
   // How long to wait for the DOM to update with blobs
   const domTimeoutMS = 1000
@@ -16,11 +18,11 @@
     while (document.querySelector(selector) === null) {
       await new Promise(resolve => requestAnimationFrame(resolve))
     }
-    return document.querySelector(selector);
-  };
+    return document.querySelector(selector)
+  }
 
   const sleep = async ms => {
-     await new Promise(resolve => setTimeout(resolve, ms));
+     await new Promise(resolve => setTimeout(resolve, ms))
   }
 
   // Is this the kind of mutation that has new images in the chat?
@@ -96,9 +98,7 @@
     })
   }
 
-  // Listen for messages from the popup
-  chrome.runtime.onMessage.addListener(async (message, _sender, _sendResponse) => {
-    let syncIntervalId = null
+  chrome.runtime.onMessage.addListener(async message => {
     if (message.action === 'startObserving') {
       // Send images on first load
       const main = await afterElementLoaded('div[id="main"]')
@@ -111,7 +111,7 @@
       // Repeatedly synchronize the slideshow to the images
       syncIntervalId = setInterval(sendImageDB, syncIntervalMS)
 
-      const observer = new MutationObserver(mutations => {
+      observer = new MutationObserver(mutations => {
         mutations
           .filter(isAddedImageMutation)
           .forEach(async m => {
@@ -134,7 +134,9 @@
         subtree: true, // Observe descendants of the target node
       })
     } else if (message.action === 'stopObserving') {
-      clearInterval(syncIntervalId);
+      console.log('Stopping')
+      clearInterval(syncIntervalId)
+      observer.disconnect()
       imageDB = {}
     }
   })
