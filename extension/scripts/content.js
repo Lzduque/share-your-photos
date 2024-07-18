@@ -14,6 +14,8 @@
   // The identifier for what WhatsApp uses as a container for messages
   const rowSelector = 'div[role="row"]'
 
+  const messagesContainerSelector = '#main div[role="application"]'
+
   const afterElementLoaded = async selector => {
     while (document.querySelector(selector) === null) {
       await new Promise(resolve => requestAnimationFrame(resolve))
@@ -103,8 +105,20 @@
     }
   }
 
+  // Remove any images that are not still in the DOM
+  cleanUpImageDB = () => {
+    Object.keys(imageDB).forEach(id => {
+      const element = document.querySelector(`${messagesContainerSelector} ${rowSelector} div[data-id="${id}"]`)
+      if (!element) {
+        delete imageDB[id]
+      }
+    })
+  }
+
   // Send the images to the background
   const sendImageDB = () => {
+    // Clean up before sending
+    cleanUpImageDB()
     console.log('sending imageDB:', imageDB)
     chrome.runtime.sendMessage({
       images: imageDB,
@@ -120,10 +134,10 @@
   chrome.runtime.onMessage.addListener(async message => {
     if (message.action === 'startObserving') {
       // Send images on first load
-      const main = await afterElementLoaded('#main div[role="application"]')
+      const messagesContainer = await afterElementLoaded(messagesContainerSelector)
       // Wait extra time for the DOM to populate with rows
       await sleep(domTimeoutMS)
-      const rows = main.querySelectorAll(rowSelector)
+      const rows = messagesContainer.querySelectorAll(rowSelector)
       console.log('initial rows:', rows)
       await upsertImages(rows)
 
@@ -155,7 +169,7 @@
       })
 
       // Start observing the target node for configured mutations
-      observer.observe(main, {
+      observer.observe(messagesContainer, {
         childList: true, // Observe for the addition/removal of child nodes
         characterData: true, // Observe data changes in text nodes
         attributes: true, // Observe attribute changes
