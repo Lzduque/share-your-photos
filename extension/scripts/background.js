@@ -41,6 +41,8 @@
     })
   }
 
+  const maxOrder = imageDB => Math.max(0, ...Object.values(imageDB).map(({order}) => order))
+
   chrome.tabs.onRemoved.addListener(tabId => {
     if (tabId === slideshowTabId) {
       chrome.tabs.sendMessage(contentTabId, {
@@ -70,7 +72,7 @@
               id,
               url,
               reactions,
-              order: Object.entries(imageDB).length,
+              order: maxOrder(imageDB) + 1,
             }
           }
         })
