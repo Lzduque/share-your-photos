@@ -80,12 +80,11 @@
     }
   }
 
-  // Send the images to the slideshow
+  // Send the images to the background
   const sendImageDB = () => {
     console.log('sending imageDB:', imageDB)
     chrome.runtime.sendMessage({
       images: imageDB,
-      from: 'content',
     })
   }
 
@@ -99,7 +98,6 @@
 
   // Listen for messages from the popup
   chrome.runtime.onMessage.addListener(async (message, _sender, _sendResponse) => {
-    console.log('message received:', message)
     let syncIntervalId = null
     if (message.action === 'startObserving') {
       // Send images on first load
@@ -137,6 +135,7 @@
       })
     } else if (message.action === 'stopObserving') {
       clearInterval(syncIntervalId);
+      imageDB = {}
     }
   })
 })();
