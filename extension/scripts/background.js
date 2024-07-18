@@ -75,6 +75,14 @@
           }
         })
 
+      // Remove any images that are present in the database but not in the received images
+      Object.keys(imageDB)
+        .forEach(id => {
+          if (!message.images[id]) {
+            delete imageDB[id]
+          }
+        })
+
       // Forward the images to the slideshow tab
       if (slideshowTabId !== null) {
         chrome.tabs.sendMessage(slideshowTabId, {

@@ -29,9 +29,21 @@
   const isAddedImageMutation = m => {
     return (
       m.type === 'childList' &&
-        m.addedNodes.length > 0 &&
+        m.addedNodes.length === 1 &&
         m.addedNodes[0]?.className === '' &&
-        m.addedNodes[0]?.tagName === 'DIV'
+        m.addedNodes[0]?.tagName === 'DIV' &&
+        m.addedNodes[0]?.role === 'row'
+    )
+  }
+
+  // Is this the kind of mutation that removed an image from the chat?
+  const isRemovedImageMutation = m => {
+    return (
+      m.type === 'childList' &&
+        m.removedNodes.length === 1 &&
+        m.removedNodes[0]?.className === '' &&
+        m.removedNodes[0]?.tagName === 'DIV' &&
+        m.removedNodes[0]?.role === 'row'
     )
   }
 
@@ -39,20 +51,21 @@
   const isReactionMutation = m => {
     const addedReaction = (
       m.type === 'childList' &&
-        m.addedNodes.length > 0 &&
+        m.addedNodes.length === 1 &&
         m.addedNodes[0]?.tagName === 'BUTTON' &&
         m.addedNodes[0]?.ariaLabel.toLowerCase().startsWith('reaction')
     )
 
     const updatedReaction = (
       m.type === 'attributes' &&
+        m.attributeName === 'aria-label' &&
         m.target?.tagName === 'BUTTON' &&
-        m.attributeName === 'aria-label'
+        m.target?.ariaLabel.toLowerCase().startsWith('reaction')
     )
 
     const removedReaction = (
       m.type === 'childList' &&
-        m.removedNodes.length > 0 &&
+        m.removedNodes.length === 1 &&
         m.removedNodes[0]?.tagName === 'BUTTON' &&
         m.removedNodes[0]?.ariaLabel.toLowerCase().startsWith('reaction')
     )
@@ -66,7 +79,7 @@
   }
 
   // Get new or updated image within the row and add it to the DB
-  const updateImage = rowNode => {
+  const upsertImage = rowNode => {
     const id = rowNode.firstElementChild?.getAttribute('data-id')
     if (id) {
       const images = rowNode.querySelectorAll('img[src^="blob:https://web.whatsapp.com/"]')
@@ -82,6 +95,14 @@
     }
   }
 
+  // Remove an image from the DB
+  const removeImage = rowNode => {
+    const id = rowNode.firstElementChild?.getAttribute('data-id')
+    if (id) {
+      delete imageDB[id]
+    }
+  }
+
   // Send the images to the background
   const sendImageDB = () => {
     console.log('sending imageDB:', imageDB)
@@ -90,23 +111,21 @@
     })
   }
 
-  const updateImages = async imageRowNodes => {
-    Array.from(imageRowNodes).forEach(async rowNode => {
-      // Wait for the DOM to update with blobs
-      await sleep(domTimeoutMS)
-      updateImage(rowNode)
-    })
+  const upsertImages = async imageRowNodes => {
+    // Wait for the DOM to update with blobs
+    await sleep(domTimeoutMS)
+    Array.from(imageRowNodes).forEach(upsertImage)
   }
 
   chrome.runtime.onMessage.addListener(async message => {
     if (message.action === 'startObserving') {
       // Send images on first load
-      const main = await afterElementLoaded('div[id="main"]')
+      const main = await afterElementLoaded('#main div[role="application"]')
       // Wait extra time for the DOM to populate with rows
       await sleep(domTimeoutMS)
       const rows = main.querySelectorAll(rowSelector)
       console.log('initial rows:', rows)
-      await updateImages(rows)
+      await upsertImages(rows)
 
       // Repeatedly synchronize the slideshow to the images
       syncIntervalId = setInterval(sendImageDB, syncIntervalMS)
@@ -115,14 +134,23 @@
         mutations
           .filter(isAddedImageMutation)
           .forEach(async m => {
-            await updateImages(m.addedNodes)
+            // Wait for the DOM to update with blobs
+            await sleep(domTimeoutMS)
+            upsertImage(m.addedNodes[0])
+          })
+
+        mutations
+          .filter(isRemovedImageMutation)
+          .forEach(async m => {
+            await removeImage(m.removedNodes[0])
           })
 
         mutations
           .filter(isReactionMutation)
           .forEach(async m => {
+            // Wait for the DOM to update
             await sleep(domTimeoutMS)
-            await updateImage(m.target.closest(rowSelector))
+            await upsertImage(m.target.closest(rowSelector))
           })
       })
 
