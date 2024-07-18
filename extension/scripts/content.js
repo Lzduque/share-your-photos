@@ -105,20 +105,8 @@
     }
   }
 
-  // Remove any images that are not still in the DOM
-  cleanUpImageDB = () => {
-    Object.keys(imageDB).forEach(id => {
-      const element = document.querySelector(`${messagesContainerSelector} ${rowSelector} div[data-id="${id}"]`)
-      if (!element) {
-        delete imageDB[id]
-      }
-    })
-  }
-
   // Send the images to the background
   const sendImageDB = () => {
-    // Clean up before sending
-    cleanUpImageDB()
     console.log('sending imageDB:', imageDB)
     chrome.runtime.sendMessage({
       images: imageDB,
